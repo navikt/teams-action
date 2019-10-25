@@ -1,0 +1,9 @@
+name: Manage Azure AD groups and GitHub teams at NAV
+author: "@navikt/aura"
+description: Create Azure AD groups and GitHub Teams from the teams YAML file being committed.
+runs:
+  using: docker
+  image: Dockerfile
+branding:
+  icon: users
+  color: blue

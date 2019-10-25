@@ -1,0 +1,45 @@
+{
+    "name": "navikt/teams",
+    "description": "Team management at NAV",
+    "homepage": "https://github.com/navikt/teams-action",
+    "readme": "README.md",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "@navikt/aura"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/navikt/teams-action/issues",
+        "source": "https://github.com/navikt/teams-action",
+        "docs": "https://github.com/navikt/teams-action"
+    },
+    "require": {
+        "guzzlehttp/guzzle": "^6.3",
+        "symfony/yaml": "^4.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5",
+        "phpstan/phpstan": "^0.11.17"
+    },
+    "autoload": {
+        "psr-4": {
+            "NAV\\Teams\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NAV\\Teams\\": "tests/"
+        }
+    },
+    "scripts": {
+        "lint": "for file in `git ls-files '*.php'`; do php -l $file; done",
+        "test": "vendor/bin/phpunit",
+        "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
+        "sa": "vendor/bin/phpstan analyse src -l max",
+        "qa": [
+            "@sa",
+            "@test"
+        ]
+    }
+}
