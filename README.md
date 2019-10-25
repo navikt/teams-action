@@ -1,5 +1,7 @@
 # GitHub Action used for teams management
 
+[![Actions Status](https://github.com/navikt/teams-action/workflows/Test%20and%20publish/badge.svg)](https://github.com/navikt/teams-action/actions)
+
 This action can be used to create Azure AD groups and GitHub teams for all teams at NAV. The action is used by [navikt/teams](https://github.com/navikt/teams).
 
 When the action is triggered it will open the teams YAML file pointed to by the `TEAMS_YAML_PATH` environment variable, loop over all teams, and for each team it will do the following:
