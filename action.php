@@ -5,7 +5,7 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use GuzzleHttp\Exception\ClientException;
 
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 function fail(string $message, int $code = 1) : void {
     echo trim($message) . PHP_EOL;
