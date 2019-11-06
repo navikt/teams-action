@@ -2,6 +2,7 @@ name: Test and publish
 on: [push]
 jobs:
   test:
+    name: Install and run unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -12,8 +13,18 @@ jobs:
       - name: Lint all PHP files
         run: composer run lint
 
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@preview
+        with:
+          path: vendor
+          key: ${{ runner.os }}-node-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-suggest --no-ansi
 
       - name: Run static analysis
         run: composer run sa
@@ -21,6 +32,7 @@ jobs:
       - name: Run test suite
         run: composer run test
   publish-to-dockerhub:
+    name: Publish to Dockerhub
     needs: test
     runs-on: ubuntu-latest
     steps:

@@ -19,8 +19,4 @@ FROM php:7.3-cli-alpine
 LABEL "repository"="https://github.com/navikt/teams-action"
 LABEL "maintainer"="@navikt/aura"
 COPY --from=build /app /app
-RUN addgroup -S teams && \
-    adduser -S teams -G teams && \
-    chown -R teams /app
-USER teams
 ENTRYPOINT ["php", "/app/action.php"]
