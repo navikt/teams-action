@@ -2,6 +2,7 @@ name: Test and publish
 on: [push]
 jobs:
   test:
+    name: Install and run unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -31,6 +32,7 @@ jobs:
       - name: Run test suite
         run: composer run test
   publish-to-dockerhub:
+    name: Publish to Dockerhub
     needs: test
     runs-on: ubuntu-latest
     steps:
