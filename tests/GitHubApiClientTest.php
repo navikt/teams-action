@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Middleware;
+use NAV\Teams\Models\AzureAdGroup;
 
 /**
  * @coversDefaultClass NAV\Teams\GitHubApiClient
@@ -96,5 +97,44 @@ class GitHubClientTest extends TestCase {
         $body = json_decode($request->getBody()->getContents(), true);
 
         $this->assertSame('team-name', $body['name'], 'Team name not correct');
+    }
+
+    /**
+     * @covers ::syncTeamAndGroup
+     */
+    public function testTeamSync() : void {
+        $team = $this->createConfiguredMock(GitHubTeam::class, [
+            'getId' => 123,
+        ]);
+        $aadGroup = $this->createConfiguredMock(AzureAdGroup::class, [
+            'getId'          => '123abc',
+            'getDisplayName' => 'group name',
+            'getDescription' => 'group description',
+        ]);
+
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [new Response(201)],
+            $clientHistory
+        );
+
+        $this->assertTrue((new GitHubApiClient('access-token', $httpClient))->syncTeamAndGroup($team, $aadGroup));
+
+        $this->assertCount(1, $clientHistory, 'Expected one request');
+
+        $request = $clientHistory[0]['request'];
+        $this->assertSame('PATCH', $request->getMethod());
+        $this->assertSame('teams/123/team-sync/group-mappings', (string) $request->getUri());
+        $body = json_decode($request->getBody()->getContents(), true);
+
+        $this->assertSame([
+            'groups' => [
+                [
+                    'group_id'          => '123abc',
+                    'group_name'        => 'group name',
+                    'group_description' => 'group description',
+                ]
+            ]
+        ], $body);
     }
 }

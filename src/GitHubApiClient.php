@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams;
 
+use NAV\Teams\Models\AzureAdGroup;
 use NAV\Teams\Models\GitHubTeam;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
@@ -38,7 +39,7 @@ class GitHubApiClient {
     /**
      * @throws ClientException
      */
-    public function createTeam(string $teamName) : ?GitHubTeam {
+    public function createTeam(string $teamName) : GitHubTeam {
         $response = $this->httpClient->post('orgs/navikt/teams', [
             'json' => [
                 'name'        => $teamName,
@@ -103,5 +104,22 @@ GQL;
         } while ($pageInfo['hasNextPage']);
 
         return null;
+    }
+
+    /**
+     * @throws ClientException
+     */
+    public function syncTeamAndGroup(GitHubTeam $team, AzureAdGroup $aadGroup) : bool {
+        $this->httpClient->patch(sprintf('teams/%d/team-sync/group-mappings', $team->getId()), [
+            'json' => [
+                'groups' => [[
+                    'group_id'          => $aadGroup->getId(),
+                    'group_name'        => $aadGroup->getDisplayName(),
+                    'group_description' => $aadGroup->getDescription(),
+                ]]
+            ]
+        ]);
+
+        return true;
     }
 }
