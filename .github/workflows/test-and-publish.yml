@@ -33,7 +33,8 @@ jobs:
         run: composer run test
 
       - name: Check API rate limit
-        run: curl "https://api.github.com/rate_limit" -H "Authorization: token $GITHUB_TOKEN"
+        run: |
+          curl "https://api.github.com/rate_limit" -H "Authorization: token $GITHUB_TOKEN"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish-to-dockerhub:
