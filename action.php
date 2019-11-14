@@ -125,4 +125,12 @@ foreach ($teams as $teamName) {
     }
 
     debug(sprintf('Created GitHub team: %s', $githubTeam->getName()));
+
+    try {
+        $githubApiClient->syncTeamAndGroup($gihubTeam, $aadGroup);
+    } catch (ClientException $e) {
+        fail(sprintf('Unable to create GitHub team "%s". Error message: %s', $teamName, $e->getMessage()));
+    }
+
+    debug('Connected GitHub team with Azure AD group');
 }
