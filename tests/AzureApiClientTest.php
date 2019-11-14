@@ -52,7 +52,7 @@ class AzureApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name"}')],
+            [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description"}')],
             $clientHistory
         );
 
@@ -86,7 +86,7 @@ class AzureApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name"}]}')],
+            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description"}]}')],
             $clientHistory
         );
 
@@ -138,7 +138,7 @@ class AzureApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name"}')],
+            [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description"}')],
             $clientHistory
         );
 

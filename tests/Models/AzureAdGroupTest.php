@@ -15,10 +15,6 @@ class AzureAdGroupTest extends TestCase {
                 'some name',
                 'some description'
             ],
-            'no description' => [
-                'some-id',
-                'some name'
-            ],
         ];
     }
 
@@ -30,7 +26,7 @@ class AzureAdGroupTest extends TestCase {
      * @covers ::__construct
      * @dataProvider getCreationData
      */
-    public function testCanCreateFromArray(string $id, string $displayName, string $description = null) : void {
+    public function testCanCreateFromArray(string $id, string $displayName, string $description) : void {
         $team = AzureAdGroup::fromArray(['id' => $id, 'displayName' => $displayName, 'description' => $description]);
         $this->assertSame($id, $team->getId());
         $this->assertSame($displayName, $team->getDisplayName());
