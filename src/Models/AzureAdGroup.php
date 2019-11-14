@@ -8,7 +8,7 @@ class AzureAdGroup {
     private $displayName;
     private $description;
 
-    public function __construct(string $id, string $displayName, string $description = null) {
+    public function __construct(string $id, string $displayName, string $description) {
         $this->id = $id;
         $this->displayName = $displayName;
         $this->description = $description;
@@ -22,12 +22,12 @@ class AzureAdGroup {
         return $this->displayName;
     }
 
-    public function getDescription() : ?string {
+    public function getDescription() : string {
         return $this->description;
     }
 
     public static function fromArray(array $data) : self {
-        foreach (['id', 'displayName'] as $required) {
+        foreach (['id', 'displayName', 'description'] as $required) {
             if (empty($data[$required])) {
                 throw new InvalidArgumentException(sprintf('Missing data element: %s', $required));
             }
@@ -36,7 +36,7 @@ class AzureAdGroup {
         return new self(
             $data['id'],
             $data['displayName'],
-            $data['description'] ?? null
+            $data['description']
         );
     }
 }
