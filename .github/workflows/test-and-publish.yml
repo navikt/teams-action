@@ -37,6 +37,11 @@ jobs:
           curl -s "https://api.github.com/rate_limit" -H "Authorization: token $GITHUB_TOKEN"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check API rate limit
+        run: |
+          curl -s "https://api.github.com/rate_limit" -H "Authorization: token $GITHUB_TOKEN"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish-to-dockerhub:
     name: Publish to Dockerhub
     needs: test
