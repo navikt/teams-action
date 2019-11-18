@@ -38,7 +38,7 @@ try {
         return $team['name'];
     }, Yaml::parseFile(getenv('TEAMS_YAML_PATH'))['teams']);
 } catch (ParseException $e) {
-    fail(sprintf('Invalid YAML in teams.yml: $s', $e->getMessage()));
+    fail(sprintf('Invalid YAML in teams.yml: %s', $e->getMessage()));
 }
 
 if (empty($teams)) {
@@ -134,7 +134,7 @@ foreach ($teams as $teamName) {
     try {
         $githubApiClient->syncTeamAndGroup($gihubTeam, $aadGroup);
     } catch (ClientException $e) {
-        fail(sprintf('Unable to sync GitHub team and Azure AD group. Error message: %s', $teamName, $e->getMessage()));
+        fail(sprintf('Unable to sync GitHub team and Azure AD group. Error message: %s', $e->getMessage()));
     }
 
     debug('Connected GitHub team with Azure AD group');
@@ -142,7 +142,7 @@ foreach ($teams as $teamName) {
     try {
         $naisDeploymentApiClient->provisionTeamKey($teamName);
     } catch (ClientException $e) {
-        fail(sprintf('Unable to create Nais deployment key. Error message: %s', $teamName, $e->getMessage()));
+        fail(sprintf('Unable to create Nais deployment key. Error message: %s', $e->getMessage()));
     }
 
     debug('Nais deployment key created');
