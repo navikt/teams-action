@@ -44,7 +44,7 @@ class NaisDeploymentApiClient {
                     hash_hmac(
                         'sha256',
                         $request->getBody()->getContents(),
-                        hex2bin($secret)
+                        (string) hex2bin($secret)
                     )
                 );
             }), self::ADD_SIGNATURE_MIDDLEWARE);
