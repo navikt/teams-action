@@ -15,7 +15,7 @@ use NAV\Teams\Models\AzureAdGroup;
 /**
  * @coversDefaultClass NAV\Teams\GitHubApiClient
  */
-class GitHubClientTest extends TestCase {
+class GitHubApiClientTest extends TestCase {
     private function getMockClient(array $responses, array &$history = []) : HttpClient {
         $handler = HandlerStack::create(new MockHandler($responses));
         $handler->push(Middleware::history($history));
