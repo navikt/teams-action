@@ -3,6 +3,7 @@ namespace NAV\Teams;
 
 use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
@@ -32,7 +33,7 @@ class NaisDeploymentApiClientTest extends TestCase {
     public function testCanProvisionTeamKey() : void {
         $history = [];
         $httpClient = $this->getMockClient([new Response(201)], $history);
-        $this->assertTrue((new NaisDeploymentApiClient('736563726574', $httpClient))->provisionTeamKey('my-team'));
+        (new NaisDeploymentApiClient('736563726574', $httpClient))->provisionTeamKey('my-team');
         $this->assertNotEmpty($history[0]['request']->getHeaderLine('x-nais-signature'));
     }
 
@@ -41,6 +42,7 @@ class NaisDeploymentApiClientTest extends TestCase {
      */
     public function testReturnsFalseWhenKeyProvisioningFails() : void {
         $httpClient = $this->getMockClient([new Response(403)]);
-        $this->assertFalse((new NaisDeploymentApiClient('736563726574', $httpClient))->provisionTeamKey('my-team'));
+        $this->expectException(ClientException::class);
+        (new NaisDeploymentApiClient('736563726574', $httpClient))->provisionTeamKey('my-team');
     }
 }

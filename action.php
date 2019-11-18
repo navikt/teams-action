@@ -24,6 +24,7 @@ $requiredEnvVars = [
     'GITHUB_ACTOR',
     'GITHUB_PAT',
     'TEAMS_YAML_PATH',
+    'NAIS_DEPLOYMENT_API_SECRET'
 ];
 
 foreach ($requiredEnvVars as $requiredEnvVar) {
@@ -57,11 +58,15 @@ try {
         getenv('AZURE_AD_APP_SECRET')
     );
 } catch (ClientException $e) {
-    fail(sprintf('Could not create Azure API client: %s', $e->getMessage()));
+    fail(sprintf('Unable to create Azure API client: %s', $e->getMessage()));
 }
 
 $githubApiClient = new GitHubApiClient(
     getenv('GITHUB_PAT')
+);
+
+$naisDeploymentApiClient = new NaisDeploymentApiClient(
+    getenv('NAIS_DEPLOYMENT_API_SECRET')
 );
 
 $actor = getenv('GITHUB_ACTOR');
@@ -133,4 +138,12 @@ foreach ($teams as $teamName) {
     }
 
     debug('Connected GitHub team with Azure AD group');
+
+    try {
+        $naisDeploymentApiClient->provisionTeamKey($teamName);
+    } catch (ClientException $e) {
+        fail(sprintf('Unable to create Nais deployment key. Error message: %s', $teamName, $e->getMessage()));
+    }
+
+    debug('Nais deployment key created');
 }

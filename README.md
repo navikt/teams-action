@@ -48,3 +48,7 @@ The reason for using a personal access token instead of the auto-generated `GITH
 ### `TEAMS_YAML_PATH`
 
 Path to where the teams YAML file is located. Documentation regarding this file is available in the [navikt/teams](https://github.com/navikt/teams) repository.
+
+### `NAIS_DEPLOYMENT_API_SECRET`
+
+Hex-encoded secret used to create Nais deployment key for the teams.

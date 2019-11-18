@@ -56,21 +56,15 @@ class NaisDeploymentApiClient {
      * Provision a team key
      *
      * @param string $team The name of the team
-     * @return bool
+     * @return void
      */
-    public function provisionTeamKey(string $team) : bool {
-        try {
-            $this->httpClient->post('provision', [
-                'json' => [
-                    'team'      => $team,
-                    'rotate'    => false,
-                    'timestamp' => time(),
-                ]]
-            );
-        } catch (ClientException $e) {
-            return false;
-        }
-
-        return true;
+    public function provisionTeamKey(string $team) : void {
+        $this->httpClient->post('provision', [
+            'json' => [
+                'team'      => $team,
+                'rotate'    => false,
+                'timestamp' => time(),
+            ]]
+        );
     }
 }
