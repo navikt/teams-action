@@ -2,7 +2,6 @@
 namespace NAV\Teams;
 
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 
