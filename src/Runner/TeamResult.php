@@ -1,10 +1,12 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams\Runner;
 
-class TeamResult {
-    const TEAM_SKIPPED = 0;
-    const TEAM_ADDED   = 1;
-    const TEAM_FAILURE = 2;
+use JsonSerializable;
+
+class TeamResult implements JsonSerializable {
+    const TEAM_SKIPPED = 'skipped';
+    const TEAM_ADDED   = 'added';
+    const TEAM_FAILURE = 'failure';
 
     /**
      * @var string
@@ -17,7 +19,7 @@ class TeamResult {
     private $message;
 
     /**
-     * @var int
+     * @var string
      */
     private $result;
 
@@ -26,9 +28,9 @@ class TeamResult {
      *
      * @param string $teamName Name of the team
      * @param string $message Status message
-     * @param int $result The result of the operation
+     * @param string $result The result of the operation
      */
-    public function __construct(string $teamName, string $message, int $result = self::TEAM_SKIPPED) {
+    public function __construct(string $teamName, string $message, string $result = self::TEAM_SKIPPED) {
         $this->teamName = $teamName;
         $this->message  = $message;
         $this->result   = $result;
@@ -73,5 +75,18 @@ class TeamResult {
      */
     public function skipped() : bool {
         return self::TEAM_SKIPPED === $this->result;
+    }
+
+    /**
+     * Serialze as JSON
+     *
+     * @return array
+     */
+    public function jsonSerialize() : array {
+        return [
+            'team'    => $this->getTeamName(),
+            'message' => $this->getMessage(),
+            'result'  => $this->result,
+        ];
     }
 }
