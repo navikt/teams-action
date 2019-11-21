@@ -34,22 +34,43 @@ class TeamResult {
         $this->result   = $result;
     }
 
+    /**
+     * Get the team name
+     */
     public function getTeamName() : string {
         return $this->teamName;
     }
 
+    /**
+     * Get the result message
+     */
     public function getMessage() : string {
         return $this->message;
     }
 
+    /**
+     * Check if the team was added
+     *
+     * @return bool
+     */
     public function added() : bool {
         return self::TEAM_ADDED === $this->result;
     }
 
+    /**
+     * Check if the operation was a failure
+     *
+     * @return bool
+     */
     public function failure() : bool {
         return self::TEAM_FAILURE === $this->result;
     }
 
+    /**
+     * Check if the team was skipped
+     *
+     * @return bool
+     */
     public function skipped() : bool {
         return self::TEAM_SKIPPED === $this->result;
     }

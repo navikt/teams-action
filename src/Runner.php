@@ -20,6 +20,13 @@ class Runner {
      */
     private $naisDeploymentApiClient;
 
+    /**
+     * Class constructor
+     *
+     * @param AzureApiClient $azureApiClient
+     * @param GitHubApiClient $githubApiClient
+     * @param NaisDeploymentApiClient $naisDeploymentApiClient
+     */
     public function __construct(
         AzureApiClient $azureApiClient,
         GitHubApiClient $githubApiClient,
