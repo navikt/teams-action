@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams;
 
+use NAV\Teams\Runner\TeamResult;
 use GuzzleHttp\Exception\ClientException;
 
 class Runner {
@@ -43,10 +44,7 @@ class Runner {
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $googleSuiteProvisioningApplicationId
      * @param string $googleSuiteProvisioningApplicationRoleId
-     * @return array Each entry in the array is an object with the team name as the key, and the following keys as value:
-     *               - <string> message: A textual description
-     *               - <bool> skipped: Whether or not the team was skipped (defaults to false)
-     *               - <bool> failure: Whether or not an error occurred when trying to add the team / group (defaults to false)
+     * @return TeamResult[]
      */
     public function run(
         array $teams,
@@ -60,76 +58,81 @@ class Runner {
             $aadGroup = $this->azureApiClient->getGroupByName($teamName);
 
             if (null !== $aadGroup) {
-                $result[$teamName] = [
-                    'message' => sprintf('Group "%s" (ID: %s) already exists in Azure AD, skipping...', $teamName, $aadGroup->getId()),
-                    'skipped' => true,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    sprintf('Group already exists in Azure AD with ID "%s", skipping...', $aadGroup->getId()),
+                    TeamResult::TEAM_SKIPPED
+                );
                 continue;
             }
 
             $githubTeam = $this->githubApiClient->getTeam($teamName);
 
             if (null !== $githubTeam) {
-                $result[$teamName] = [
-                    'message' => sprintf('Team "%s" (ID: %d) already exists on GitHub, skipping...', $teamName, $githubTeam->getId()),
-                    'skipped' => true,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    sprintf('Team "%s" (ID: %d) already exists on GitHub, skipping...', $teamName, $githubTeam->getId()),
+                    TeamResult::TEAM_SKIPPED
+                );
                 continue;
             }
 
             try {
                 $aadGroup = $this->azureApiClient->createGroup($teamName, [$userObjectId], [$userObjectId]);
             } catch (ClientException $e) {
-                $result[$teamName] = [
-                    'message' => sprintf('Unable to create Azure AD group: "%s". Error message: %s', $teamName, $e->getMessage()),
-                    'failure' => true,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    sprintf('Unable to create Azure AD group: "%s". Error message: %s', $teamName, $e->getMessage()),
+                    TeamResult::TEAM_FAILURE
+                );
                 continue;
             }
 
             try {
                 $this->azureApiClient->addGroupToEnterpriseApp($aadGroup, $googleSuiteProvisioningApplicationId, $googleSuiteProvisioningApplicationRoleId);
             } catch (ClientException $e) {
-                $result[$teamName] = [
-                    'message' => 'Unable to add the Azure AD group to the Google Suite Provisioning application',
-                    'skipped' => false,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    'Unable to add the Azure AD group to the Google Suite Provisioning application',
+                    TeamResult::TEAM_FAILURE
+                );
                 continue;
             }
 
             try {
                 $githubTeam = $this->githubApiClient->createTeam($teamName, $aadGroup);
             } catch (ClientException $e) {
-                $result[$teamName] = [
-                    'message' => sprintf('Unable to create GitHub team "%s". Error message: %s', $teamName, $e->getMessage()),
-                    'failure' => true,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    sprintf('Unable to create GitHub team "%s". Error message: %s', $teamName, $e->getMessage()),
+                    TeamResult::TEAM_FAILURE
+                );
                 continue;
             }
 
             try {
                 $this->githubApiClient->syncTeamAndGroup($githubTeam, $aadGroup);
             } catch (ClientException $e) {
-                $result[$teamName] = [
-                    'message' => sprintf('Unable to sync GitHub team and Azure AD group. Error message: %s', $e->getMessage()),
-                    'failure' => true,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    sprintf('Unable to sync GitHub team and Azure AD group. Error message: %s', $e->getMessage()),
+                    TeamResult::TEAM_FAILURE
+                );
                 continue;
             }
 
             try {
                 $this->naisDeploymentApiClient->provisionTeamKey($teamName);
             } catch (ClientException $e) {
-                $result[$teamName] = [
-                    'message' => sprintf('Unable to create Nais deployment key. Error message: %s', $e->getMessage()),
-                    'failure' => true,
-                ];
+                $result[$teamName] = new TeamResult(
+                    $teamName,
+                    sprintf('Unable to create Nais deployment key. Error message: %s', $e->getMessage()),
+                    TeamResult::TEAM_FAILURE
+                );
                 continue;
             }
 
-            $result[$teamName] = [
-                'message' => sprintf('Team added: %s', $teamName),
-            ];
+            $result[$teamName] = new TeamResult($teamName, 'Team added', TeamResult::TEAM_ADDED);
         }
 
         return $result;
