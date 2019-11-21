@@ -28,6 +28,7 @@ class NaisDeploymentApiClientTest extends TestCase {
     }
 
     /**
+     * @covers ::__construct
      * @covers ::provisionTeamKey
      */
     public function testCanProvisionTeamKey() : void {
