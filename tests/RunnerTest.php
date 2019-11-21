@@ -143,7 +143,7 @@ class RunnerTest extends TestCase {
         $this->githubApiClient
             ->expects($this->once())
             ->method('createTeam')
-            ->with('team-name', $aadGroup)
+            ->with('team-name')
             ->willThrowException($this->getClientException('error message'));
 
         $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
@@ -172,7 +172,7 @@ class RunnerTest extends TestCase {
         $this->githubApiClient
             ->expects($this->once())
             ->method('createTeam')
-            ->with('team-name', $aadGroup)
+            ->with('team-name')
             ->willReturn($githubTeam);
         $this->githubApiClient
             ->expects($this->once())
@@ -206,7 +206,7 @@ class RunnerTest extends TestCase {
         $this->githubApiClient
             ->expects($this->once())
             ->method('createTeam')
-            ->with('team-name', $aadGroup)
+            ->with('team-name')
             ->willReturn($githubTeam);
 
         $this->naisDeploymentApiClient
@@ -242,7 +242,7 @@ class RunnerTest extends TestCase {
         $this->githubApiClient
             ->expects($this->once())
             ->method('createTeam')
-            ->with('team-name', $aadGroup)
+            ->with('team-name')
             ->willReturn($githubTeam);
 
         $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));

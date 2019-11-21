@@ -20,13 +20,6 @@ class Runner {
      */
     private $naisDeploymentApiClient;
 
-    /**
-     * Class constructor
-     *
-     * @param AzureApiClient $aadClient
-     * @param GitHubApiClient $githubClient
-     * @param NaisDeplymentApiClient $naisClient
-     */
     public function __construct(
         AzureApiClient $azureApiClient,
         GitHubApiClient $githubApiClient,
@@ -100,7 +93,7 @@ class Runner {
             }
 
             try {
-                $githubTeam = $this->githubApiClient->createTeam($teamName, $aadGroup);
+                $githubTeam = $this->githubApiClient->createTeam($teamName);
             } catch (ClientException $e) {
                 $result[$teamName] = new TeamResult(
                     $teamName,
