@@ -58,7 +58,7 @@ class AzureApiClient {
             : null;
     }
 
-    public function createGroup(string $name, array $owners = [], array $members = []) : ?AzureAdGroup {
+    public function createGroup(string $name, array $owners = [], array $members = []) : AzureAdGroup {
         $prefixer = function(string $user) : string {
             return sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
         };
