@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams;
 
+use NAV\Teams\Models\AzureAdGroup;
 use NAV\Teams\Models\GitHubTeam;
 use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Client as HttpClient;
@@ -10,7 +11,6 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Middleware;
-use NAV\Teams\Models\AzureAdGroup;
 
 /**
  * @coversDefaultClass NAV\Teams\GitHubApiClient
@@ -136,5 +136,163 @@ class GitHubApiClientTest extends TestCase {
                 ]
             ]
         ], $body);
+    }
+
+    /**
+     * @covers ::getSamlId
+     */
+    public function testCanGetSamlId() : void {
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], json_encode([
+                    'data' => [
+                        'organization' => [
+                            'samlIdentityProvider' => [
+                                'externalIdentities' => [
+                                    'pageInfo' => [
+                                        'endCursor'   => 'some-cursor',
+                                        'hasNextPage' => true,
+                                    ],
+                                    'nodes' => [
+                                        [
+                                            'user' => [
+                                                'login' => 'user1',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user1@nav.no'
+                                            ],
+                                        ],
+                                        [
+                                            'user' => [
+                                                'login' => 'user2',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user2@nav.no'
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ])),
+
+                new Response(200, [], json_encode([
+                    'data' => [
+                        'organization' => [
+                            'samlIdentityProvider' => [
+                                'externalIdentities' => [
+                                    'pageInfo' => [
+                                        'endCursor'   => null,
+                                        'hasNextPage' => false,
+                                    ],
+                                    'nodes' => [
+                                        [
+                                            'user' => [
+                                                'login' => 'user3',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user3@nav.no'
+                                            ],
+                                        ],
+                                        [
+                                            'user' => [
+                                                'login' => 'user4',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user4@nav.no'
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ])),
+            ],
+            $clientHistory
+        );
+
+        $this->assertSame('user3@nav.no', (new GitHubApiClient('access-token', $httpClient))->getSamlId('user3'));
+    }
+
+    /**
+     * @covers ::getSamlId
+     */
+    public function testReturnsNullWhenSamlIdDoesNotExist() : void {
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], json_encode([
+                    'data' => [
+                        'organization' => [
+                            'samlIdentityProvider' => [
+                                'externalIdentities' => [
+                                    'pageInfo' => [
+                                        'endCursor'   => 'some-cursor',
+                                        'hasNextPage' => true,
+                                    ],
+                                    'nodes' => [
+                                        [
+                                            'user' => [
+                                                'login' => 'user1',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user1@nav.no'
+                                            ],
+                                        ],
+                                        [
+                                            'user' => [
+                                                'login' => 'user2',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user2@nav.no'
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ])),
+
+                new Response(200, [], json_encode([
+                    'data' => [
+                        'organization' => [
+                            'samlIdentityProvider' => [
+                                'externalIdentities' => [
+                                    'pageInfo' => [
+                                        'endCursor'   => null,
+                                        'hasNextPage' => false,
+                                    ],
+                                    'nodes' => [
+                                        [
+                                            'user' => [
+                                                'login' => 'user3',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user3@nav.no'
+                                            ],
+                                        ],
+                                        [
+                                            'user' => [
+                                                'login' => 'user4',
+                                            ],
+                                            'samlIdentity' => [
+                                                'nameId' => 'user4@nav.no'
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ])),
+            ],
+            $clientHistory
+        );
+
+        $this->assertNull((new GitHubApiClient('access-token', $httpClient))->getSamlId('user5'));
     }
 }
