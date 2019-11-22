@@ -38,6 +38,8 @@ class TeamResult implements JsonSerializable {
 
     /**
      * Get the team name
+     *
+     * @return string
      */
     public function getTeamName() : string {
         return $this->teamName;
@@ -45,6 +47,8 @@ class TeamResult implements JsonSerializable {
 
     /**
      * Get the result message
+     *
+     * @return string
      */
     public function getMessage() : string {
         return $this->message;
