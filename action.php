@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams;
 
+use NAV\Teams\Runner\ResultPrinter;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use GuzzleHttp\Exception\ClientException;
@@ -84,66 +85,9 @@ if (null === $committerSamlId) {
 $googleSuiteProvisioningApplicationId = getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ID');
 $appRoleId = getenv('AZURE_AD_GOOGLE_PROVISIONING_ROLE_ID');
 
-foreach ($teams as $teamName) {
-    $aadGroup = $azureApiClient->getGroupByName($teamName);
+$runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
+$results = $runner->run($teams, $committerSamlId, $googleSuiteProvisioningApplicationId, $appRoleId);
 
-    if (null !== $aadGroup) {
-        echo sprintf(
-            'Group "%s" (ID: %s) already exists in Azure AD, skipping...',
-            $teamName,
-            $aadGroup->getId()
-        ) . PHP_EOL;
-        continue;
-    }
+(new ResultPrinter())->print($results);
 
-    $githubTeam = $githubApiClient->getTeam($teamName);
-
-    if (null !== $githubTeam) {
-        echo sprintf(
-            'Team "%s" (ID: %d) already exists on GitHub, skipping...',
-            $teamName,
-            $githubTeam->getId()
-        ) . PHP_EOL;
-        continue;
-    }
-
-    try {
-        $aadGroup = $azureApiClient->createGroup($teamName, [$committerSamlId], [$committerSamlId]);
-    } catch (ClientException $e) {
-        fail(sprintf('Unable to create Azure AD group: "%s". Error message: %s', $teamName, $e->getMessage()));
-    }
-
-    debug(sprintf('Created Azure AD group: %s', $aadGroup->getDisplayName()));
-
-    try {
-        $azureApiClient->addGroupToEnterpriseApp($aadGroup, $googleSuiteProvisioningApplicationId, $appRoleId);
-    } catch (ClientException $e) {
-        fail('Unable to add the Azure AD group to the Google Suite Provisioning application');
-    }
-
-    debug('Added Azure AD group to the Google Suite Provisioning Enterprise Application');
-
-    try {
-        $githubTeam = $githubApiClient->createTeam($teamName, $aadGroup);
-    } catch (ClientException $e) {
-        fail(sprintf('Unable to create GitHub team "%s". Error message: %s', $teamName, $e->getMessage()));
-    }
-
-    debug(sprintf('Created GitHub team: %s', $githubTeam->getName()));
-
-    try {
-        $githubApiClient->syncTeamAndGroup($gihubTeam, $aadGroup);
-    } catch (ClientException $e) {
-        fail(sprintf('Unable to sync GitHub team and Azure AD group. Error message: %s', $e->getMessage()));
-    }
-
-    debug('Connected GitHub team with Azure AD group');
-
-    try {
-        $naisDeploymentApiClient->provisionTeamKey($teamName);
-    } catch (ClientException $e) {
-        fail(sprintf('Unable to create Nais deployment key. Error message: %s', $e->getMessage()));
-    }
-
-    debug('Nais deployment key created');
-}
+echo sprintf('::set-output name=results::%s', json_encode($results));
