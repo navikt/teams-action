@@ -15,15 +15,13 @@ class ResultPrinterTest extends TestCase {
 team-name-1: Created
 team-name-2: (error) Could not create GitHub team
 team-name-3: (skipped) Group exists in Azure AD
-team-name-4: Created
 OUTPUT;
 
         $this->expectOutputString($expectedOutput);
         (new ResultPrinter())->print([
-            new TeamResult('team-name-1', 'Team added', TeamResult::TEAM_ADDED),
-            new TeamResult('team-name-2', 'Could not create GitHub team', TeamResult::TEAM_FAILURE),
-            new TeamResult('team-name-3', 'Group exists in Azure AD', TeamResult::TEAM_SKIPPED),
-            new TeamResult('team-name-4', 'Team added', TeamResult::TEAM_ADDED),
+            (new TeamResult('team-name-1'))->setGroupId('group-id'),
+            (new TeamResult('team-name-2'))->fail('Could not create GitHub team'),
+            (new TeamResult('team-name-3'))->skip('Group exists in Azure AD'),
         ]);
     }
 }

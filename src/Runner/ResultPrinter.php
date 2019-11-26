@@ -12,7 +12,7 @@ class ResultPrinter {
         $output = [];
 
         foreach ($results as $teamResult) {
-            if ($teamResult->failure()) {
+            if ($teamResult->failed()) {
                 $output[] = sprintf('%s: (error) %s', $teamResult->getTeamName(), $teamResult->getMessage());
             } else if ($teamResult->skipped()) {
                 $output[] = sprintf('%s: (skipped) %s', $teamResult->getTeamName(), $teamResult->getMessage());

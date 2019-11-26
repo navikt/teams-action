@@ -61,7 +61,7 @@ class RunnerTest extends TestCase {
         $this->assertSame('Group already exists in Azure AD with ID "group-id", skipping...', $teamResult->getMessage());
         $this->assertTrue($teamResult->skipped());
         $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->failure());
+        $this->assertFalse($teamResult->failed());
     }
 
     /**
@@ -80,7 +80,7 @@ class RunnerTest extends TestCase {
         $this->assertSame('Team "team-name" (ID: 123) already exists on GitHub, skipping...', $teamResult->getMessage());
         $this->assertTrue($teamResult->skipped());
         $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->failure());
+        $this->assertFalse($teamResult->failed());
     }
 
     /**
@@ -97,7 +97,7 @@ class RunnerTest extends TestCase {
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to create Azure AD group: "team-name". Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failure());
+        $this->assertTrue($teamResult->failed());
         $this->assertFalse($teamResult->added());
         $this->assertFalse($teamResult->skipped());
     }
@@ -123,7 +123,7 @@ class RunnerTest extends TestCase {
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to add the Azure AD group to the Google Suite Provisioning application', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failure());
+        $this->assertTrue($teamResult->failed());
         $this->assertFalse($teamResult->added());
         $this->assertFalse($teamResult->skipped());
     }
@@ -150,7 +150,7 @@ class RunnerTest extends TestCase {
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to create GitHub team "team-name". Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failure());
+        $this->assertTrue($teamResult->failed());
         $this->assertFalse($teamResult->added());
         $this->assertFalse($teamResult->skipped());
     }
@@ -184,7 +184,7 @@ class RunnerTest extends TestCase {
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to sync GitHub team and Azure AD group. Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failure());
+        $this->assertTrue($teamResult->failed());
         $this->assertFalse($teamResult->added());
         $this->assertFalse($teamResult->skipped());
     }
@@ -219,7 +219,7 @@ class RunnerTest extends TestCase {
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to create Nais deployment key. Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failure());
+        $this->assertTrue($teamResult->failed());
         $this->assertFalse($teamResult->added());
         $this->assertFalse($teamResult->skipped());
     }
@@ -248,9 +248,8 @@ class RunnerTest extends TestCase {
         $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Team added', $teamResult->getMessage());
         $this->assertTrue($teamResult->added());
-        $this->assertFalse($teamResult->failure());
+        $this->assertFalse($teamResult->failed());
         $this->assertFalse($teamResult->skipped());
     }
 
