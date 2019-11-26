@@ -14,26 +14,97 @@ class TeamResult implements JsonSerializable {
     private $teamName;
 
     /**
-     * @var string
+     * @var bool
+     */
+    private $skipped = false;
+
+    /**
+     * @var bool
+     */
+    private $failed = false;
+
+    /**
+     * @var ?string
      */
     private $message;
 
     /**
-     * @var string
+     * @var ?string
      */
-    private $result;
+    private $groupId;
 
     /**
      * Class constructor
      *
      * @param string $teamName Name of the team
-     * @param string $message Status message
-     * @param string $result The result of the operation
      */
-    public function __construct(string $teamName, string $message, string $result = self::TEAM_SKIPPED) {
+    public function __construct(string $teamName) {
         $this->teamName = $teamName;
-        $this->message  = $message;
-        $this->result   = $result;
+    }
+
+    /**
+     * Mark the team as skipped and set a status message
+     *
+     * @param string $message
+     * @return self
+     */
+    public function skip(string $message) : self {
+        $this->skipped = true;
+        $this->message = $message;
+
+        return $this;
+    }
+
+    /**
+     * Check if the team was skipped
+     *
+     * @return bool
+     */
+    public function skipped() : bool {
+        return $this->skipped;
+    }
+
+    /**
+     * Mark the team as failed and set a status message
+     *
+     * @param string $message
+     * @return self
+     */
+    public function fail(string $message) : self {
+        $this->failed = true;
+        $this->message = $message;
+
+        return $this;
+    }
+
+    /**
+     * Check if result is a failure
+     *
+     * @return bool
+     */
+    public function failed() : bool {
+        return $this->failed;
+    }
+
+    /**
+     * Set the group ID
+     *
+     * @param string $id The Azure AD group ID
+     * @return self
+     */
+    public function setGroupId(string $id) : self {
+        $this->groupId = $id;
+
+        return $this;
+    }
+
+    /**
+     * Get the group ID
+     *
+     * @return ?string
+     */
+    public function getGroupId() : ?string {
+        return $this->groupId;
     }
 
     /**
@@ -46,39 +117,12 @@ class TeamResult implements JsonSerializable {
     }
 
     /**
-     * Get the result message
+     * Get the message
      *
-     * @return string
+     * @return ?string
      */
-    public function getMessage() : string {
+    public function getMessage() : ?string {
         return $this->message;
-    }
-
-    /**
-     * Check if the team was added
-     *
-     * @return bool
-     */
-    public function added() : bool {
-        return self::TEAM_ADDED === $this->result;
-    }
-
-    /**
-     * Check if the operation was a failure
-     *
-     * @return bool
-     */
-    public function failure() : bool {
-        return self::TEAM_FAILURE === $this->result;
-    }
-
-    /**
-     * Check if the team was skipped
-     *
-     * @return bool
-     */
-    public function skipped() : bool {
-        return self::TEAM_SKIPPED === $this->result;
     }
 
     /**
@@ -89,8 +133,11 @@ class TeamResult implements JsonSerializable {
     public function jsonSerialize() : array {
         return [
             'team'    => $this->getTeamName(),
+            'added'   => !$this->skipped() && !$this->failed(),
+            'skipped' => $this->skipped(),
+            'failed'  => $this->failed(),
+            'groupId' => $this->getGroupId(),
             'message' => $this->getMessage(),
-            'result'  => $this->result,
         ];
     }
 }

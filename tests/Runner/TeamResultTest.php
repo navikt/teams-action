@@ -9,66 +9,103 @@ use PHPUnit\Framework\TestCase;
 class TeamResultTest extends TestCase {
     public function getResults() : array {
         return [
+
             [
-                'team-name',
-                'some message',
-                TeamResult::TEAM_SKIPPED,
-                false,
-                false,
-                true,
+                (new TeamResult('team'))->skip('some message'),
+                [
+                    'team' => 'team',
+                    'added' => false,
+                    'skipped' => true,
+                    'failed' => false,
+                    'groupId' => null,
+                    'message' => 'some message',
+                ],
             ],
             [
-                'team-name',
-                'some message',
-                TeamResult::TEAM_FAILURE,
-                false,
-                true,
-                false,
+                (new TeamResult('team'))->fail('some message'),
+                [
+                    'team' => 'team',
+                    'added' => false,
+                    'skipped' => false,
+                    'failed' => true,
+                    'groupId' => null,
+                    'message' => 'some message',
+                ],
             ],
             [
-                'team-name',
-                'some message',
-                TeamResult::TEAM_ADDED,
-                true,
-                false,
-                false,
-            ]
+                (new TeamResult('team'))->setGroupId('some-id'),
+                [
+                    'team' => 'team',
+                    'added' => true,
+                    'skipped' => false,
+                    'failed' => false,
+                    'groupId' => 'some-id',
+                    'message' => null,
+                ],
+            ],
         ];
     }
 
     /**
-     * @dataProvider getResults
      * @covers ::__construct
      * @covers ::getTeamName
-     * @covers ::getMessage
-     * @covers ::added
-     * @covers ::failure
      * @covers ::skipped
+     * @covers ::failed
+     * @covers ::getMessage
+     * @covers ::setGroupId
+     * @covers ::getGroupId
+     * @covers ::jsonSerialize
      */
-    public function testCanAccessProperties(string $teamName, string $message, string $result, bool $added, bool $failure, bool $skipped) : void {
-        $result = new TeamResult($teamName, $message, $result);
-        $this->assertSame($teamName, $result->getTeamName());
-        $this->assertSame($message, $result->getMessage());
-        $this->assertSame($added, $result->added(), 'Wrong return value for added()');
-        $this->assertSame($failure, $result->failure(), 'Wrong return value for failure()');
-        $this->assertSame($skipped, $result->skipped(), 'Wrong return value for skipped()');
+    public function testSuccessfulResult() : void {
+        $this->assertSame(json_encode([
+            'team' => 'name',
+            'added' => true,
+            'skipped' => false,
+            'failed' => false,
+            'groupId' => 'group-id',
+            'message' => null,
+        ]), json_encode((new TeamResult('name'))->setGroupId('group-id')));
     }
 
     /**
+     * @covers ::__construct
+     * @covers ::getTeamName
+     * @covers ::skip
+     * @covers ::skipped
+     * @covers ::failed
+     * @covers ::getMessage
+     * @covers ::getGroupId
      * @covers ::jsonSerialize
      */
-    public function testCanSerializeAsJson() : void {
-        $this->assertSame(
-            '[' .
-            '{"team":"team-name-1","message":"some message","result":"added"},' .
-            '{"team":"team-name-2","message":"some other message","result":"failure"},' .
-            '{"team":"team-name-3","message":"some last message","result":"skipped"}' .
-            ']',
-            json_encode([
-                new TeamResult('team-name-1', 'some message', TeamResult::TEAM_ADDED),
-                new TeamResult('team-name-2', 'some other message', TeamResult::TEAM_FAILURE),
-                new TeamResult('team-name-3', 'some last message', TeamResult::TEAM_SKIPPED),
-            ])
-        );
+    public function testSkippedResult() : void {
+        $this->assertSame(json_encode([
+            'team' => 'name',
+            'added' => false,
+            'skipped' => true,
+            'failed' => false,
+            'groupId' => null,
+            'message' => 'some message',
+        ]), json_encode((new TeamResult('name'))->skip('some message')));
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::getTeamName
+     * @covers ::skipped
+     * @covers ::fail
+     * @covers ::failed
+     * @covers ::getMessage
+     * @covers ::getGroupId
+     * @covers ::jsonSerialize
+     */
+    public function testFailedResult() : void {
+        $this->assertSame(json_encode([
+            'team' => 'name',
+            'added' => false,
+            'skipped' => false,
+            'failed' => true,
+            'groupId' => null,
+            'message' => 'some message',
+        ]), json_encode((new TeamResult('name'))->fail('some message')));
     }
 }
