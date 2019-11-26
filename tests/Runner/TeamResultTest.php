@@ -7,45 +7,6 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass NAV\Teams\Runner\TeamResult
  */
 class TeamResultTest extends TestCase {
-    public function getResults() : array {
-        return [
-
-            [
-                (new TeamResult('team'))->skip('some message'),
-                [
-                    'team' => 'team',
-                    'added' => false,
-                    'skipped' => true,
-                    'failed' => false,
-                    'groupId' => null,
-                    'message' => 'some message',
-                ],
-            ],
-            [
-                (new TeamResult('team'))->fail('some message'),
-                [
-                    'team' => 'team',
-                    'added' => false,
-                    'skipped' => false,
-                    'failed' => true,
-                    'groupId' => null,
-                    'message' => 'some message',
-                ],
-            ],
-            [
-                (new TeamResult('team'))->setGroupId('some-id'),
-                [
-                    'team' => 'team',
-                    'added' => true,
-                    'skipped' => false,
-                    'failed' => false,
-                    'groupId' => 'some-id',
-                    'message' => null,
-                ],
-            ],
-        ];
-    }
-
     /**
      * @covers ::__construct
      * @covers ::getTeamName
@@ -54,6 +15,7 @@ class TeamResultTest extends TestCase {
      * @covers ::getMessage
      * @covers ::setGroupId
      * @covers ::getGroupId
+     * @covers ::added
      * @covers ::jsonSerialize
      */
     public function testSuccessfulResult() : void {
@@ -75,6 +37,7 @@ class TeamResultTest extends TestCase {
      * @covers ::failed
      * @covers ::getMessage
      * @covers ::getGroupId
+     * @covers ::added
      * @covers ::jsonSerialize
      */
     public function testSkippedResult() : void {
@@ -96,6 +59,7 @@ class TeamResultTest extends TestCase {
      * @covers ::failed
      * @covers ::getMessage
      * @covers ::getGroupId
+     * @covers ::added
      * @covers ::jsonSerialize
      */
     public function testFailedResult() : void {

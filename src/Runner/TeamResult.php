@@ -126,6 +126,15 @@ class TeamResult implements JsonSerializable {
     }
 
     /**
+     * Check if the result is successfil
+     *
+     * @return bool
+     */
+    public function added() : bool {
+        return !$this->skipped() && !$this->failed();
+    }
+
+    /**
      * Serialze as JSON
      *
      * @return array
@@ -133,7 +142,7 @@ class TeamResult implements JsonSerializable {
     public function jsonSerialize() : array {
         return [
             'team'    => $this->getTeamName(),
-            'added'   => !$this->skipped() && !$this->failed(),
+            'added'   => $this->added(),
             'skipped' => $this->skipped(),
             'failed'  => $this->failed(),
             'groupId' => $this->getGroupId(),
