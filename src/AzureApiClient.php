@@ -6,14 +6,29 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
 
 class AzureApiClient {
+    /**
+     * @var HttpClient
+     */
     private $httpClient;
+
+    /**
+     * @var string
+     */
     private $baseUri = 'https://graph.microsoft.com/beta/';
 
-    public function __construct(string $id, string $secret, HttpClient $authClient = null, HttpClient $httpClient = null) {
+    /**
+     * Class constructor
+     *
+     * @param string $clientId Client ID
+     * @param string $clientSecret Client secret
+     * @param HttpClient $authClient Pre-configured HTTP client for auth
+     * @param HttpClient $httpClient Pre-configured HTTP client for the API calls
+     */
+    public function __construct(string $clientId, string $clientSecret, HttpClient $authClient = null, HttpClient $httpClient = null) {
         $response = ($authClient ?: new HttpClient())->post('https://login.microsoftonline.com/nav.no/oauth2/v2.0/token', [
             'form_params' => [
-                'client_id'     => $id,
-                'client_secret' => $secret,
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
                 'scope'         => 'https://graph.microsoft.com/.default',
                 'grant_type'    => 'client_credentials',
             ],
@@ -30,9 +45,15 @@ class AzureApiClient {
         ]);
     }
 
-    public function getGroupById(string $id) : ?AzureAdGroup {
+    /**
+     * Get an Azure AD group by ID
+     *
+     * @param string $groupId The ID of the group
+     * @return AzureAdGroup|null
+     */
+    public function getGroupById(string $groupId) : ?AzureAdGroup {
         try {
-            $response = $this->httpClient->get(sprintf('groups/%s', $id));
+            $response = $this->httpClient->get(sprintf('groups/%s', $groupId));
         } catch (ClientException $e) {
             return null;
         }
@@ -40,11 +61,17 @@ class AzureApiClient {
         return AzureAdGroup::fromArray(json_decode($response->getBody()->getContents(), true));
     }
 
-    public function getGroupByName(string $name) : ?AzureAdGroup {
+    /**
+     * Get an Azure AD group by name
+     *
+     * @param string $groupName The display name of the group
+     * @return AzureAdGroup|null
+     */
+    public function getGroupByName(string $groupName) : ?AzureAdGroup {
         try {
             $response = $this->httpClient->get('groups', [
                 'query' => [
-                    '$filter' => sprintf('displayName eq \'%s\'', $name),
+                    '$filter' => sprintf('displayName eq \'%s\'', $groupName),
                 ],
             ]);
         } catch (ClientException $e) {
@@ -58,18 +85,26 @@ class AzureApiClient {
             : null;
     }
 
-    public function createGroup(string $name, array $owners = [], array $members = []) : ?AzureAdGroup {
+    /**
+     * Create a group
+     *
+     * @param string $groupName The name of the group
+     * @param string[] $owners List of users to be added as owners
+     * @param string[] $members List of users to be added as members
+     * @return AzureAdGroup
+     */
+    public function createGroup(string $groupName, array $owners = [], array $members = []) : AzureAdGroup {
         $prefixer = function(string $user) : string {
             return sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
         };
 
         $response = $this->httpClient->post('groups', [
             'json' => array_filter([
-                'displayName'        => $name,
+                'displayName'        => $groupName,
                 'description'        => 'Team group created by https://github.com/navikt/teams',
                 'securityEnabled'    => true,
                 'mailEnabled'        => true,
-                'mailNickname'       => $name,
+                'mailNickname'       => $groupName,
                 'groupTypes'         => ['unified'],
                 'visibility'         => 'Private',
                 'owners@odata.bind'  => array_map($prefixer, $owners),
@@ -80,11 +115,19 @@ class AzureApiClient {
         return AzureAdGroup::fromArray(json_decode($response->getBody()->getContents(), true));
     }
 
-    public function addGroupToEnterpriseApp(AzureAdGroup $group, string $applicationObjectId, string $appRoleId) : void {
+    /**
+     * Add Azure AD group to an enterprise application
+     *
+     * @param AzureAdGroup $group The group to add
+     * @param string $applicationObjectId The object ID of the application to add the group to
+     * @param string $applicationRoleId The role ID the group will receive
+     * @return void
+     */
+    public function addGroupToEnterpriseApp(AzureAdGroup $group, string $applicationObjectId, string $applicationRoleId) : void {
         $this->httpClient->post(sprintf('servicePrincipals/%s/appRoleAssignments', $applicationObjectId), [
             'json' => [
                 'principalId' => $group->getId(),
-                'appRoleId'   => $appRoleId,
+                'appRoleId'   => $applicationRoleId,
                 'resourceId'  => $applicationObjectId,
             ],
         ]);

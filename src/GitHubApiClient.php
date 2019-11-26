@@ -7,8 +7,17 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
 
 class GitHubApiClient {
+    /**
+     * @var HttpClient
+     */
     private $httpClient;
 
+    /**
+     * Class constructor
+     *
+     * @param string $personalAccessToken The personal access token to use
+     * @param HttpClient $httpClient Pre-configured HTTP client to use
+     */
     public function __construct(string $personalAccessToken, HttpClient $httpClient = null) {
         $this->httpClient = $httpClient ?: new HttpClient([
             'base_uri' => 'https://api.github.com/',
@@ -20,7 +29,11 @@ class GitHubApiClient {
     }
 
     /**
+     * Get a team by name
+     *
+     * @param string $name The name of the team
      * @throws ClientException
+     * @return GitHubTeam|null
      */
     public function getTeam(string $name) : ?GitHubTeam {
         try {
@@ -37,7 +50,11 @@ class GitHubApiClient {
     }
 
     /**
+     * Create a new team
+     *
+     * @param string $teamName The name of the team
      * @throws ClientException
+     * @return GitHubTeam
      */
     public function createTeam(string $teamName) : GitHubTeam {
         $response = $this->httpClient->post('orgs/navikt/teams', [
@@ -58,7 +75,9 @@ class GitHubApiClient {
      * a specific user, so we need to loop over all entities governed by SCIM until we find the
      * matching GitHub login. Until GitHub fixes their API this is the only solution.
      *
+     * @param string $username The GitHub login
      * @throws ClientException
+     * @return string|null
      */
     public function getSamlId(string $username) : ?string {
         $offset = null;
@@ -107,7 +126,12 @@ GQL;
     }
 
     /**
+     * Connect a GitHub team with an Azure AD group
+     *
+     * @param GitHubTeam $team The GitHub team
+     * @param AzureAdGroup $aadGroup The Azure AD group
      * @throws ClientException
+     * @return bool
      */
     public function syncTeamAndGroup(GitHubTeam $team, AzureAdGroup $aadGroup) : bool {
         $this->httpClient->patch(sprintf('teams/%d/team-sync/group-mappings', $team->getId()), [
