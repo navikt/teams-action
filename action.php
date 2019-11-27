@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams;
 
-use NAV\Teams\Runner\ResultPrinter;
 use NAV\Teams\Exceptions\InvalidArgumentException;
+use NAV\Teams\Runner\ResultPrinter;
+use NAV\Teams\Runner\TeamResult;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use GuzzleHttp\Exception\ClientException;
@@ -16,6 +17,12 @@ function fail(string $message, int $code = 1) : void {
 
 function debug(string $message) : void {
     echo trim($message) . PHP_EOL;
+}
+
+function hasFailures(array $results) : bool {
+    return 0 !== count(array_filter($results, function(TeamResult $result) : bool {
+        return $result->failed();
+    }));
 }
 
 $requiredEnvVars = [
@@ -87,5 +94,9 @@ try {
 }
 
 (new ResultPrinter())->print($results);
+
+if (hasFailures($results)) {
+    exit(1);
+}
 
 echo sprintf('::set-output name=results::%s', json_encode($results));
