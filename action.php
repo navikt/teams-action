@@ -36,9 +36,7 @@ foreach ($requiredEnvVars as $requiredEnvVar) {
 }
 
 try {
-    $teams = array_map(function(array $team) : string {
-        return $team['name'];
-    }, Yaml::parseFile(getenv('TEAMS_YAML_PATH'))['teams']);
+    $teams = Yaml::parseFile(getenv('TEAMS_YAML_PATH'))['teams'];
 } catch (ParseException $e) {
     fail(sprintf('Invalid YAML in teams.yml: %s', $e->getMessage()));
 }
