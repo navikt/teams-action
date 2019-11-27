@@ -2,6 +2,7 @@
 namespace NAV\Teams;
 
 use GuzzleHttp\Exception\ClientException;
+use NAV\Teams\Exceptions\InvalidArgumentException;
 use NAV\Teams\Models\AzureAdGroup;
 use NAV\Teams\Models\GitHubTeam;
 use PHPUnit\Framework\TestCase;
@@ -90,7 +91,7 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('createGroup')
-            ->with('team-name', [$this->userObjectId], [$this->userObjectId])
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
             ->willThrowException($this->getClientException('error message'));
 
         $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
@@ -111,7 +112,7 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('createGroup')
-            ->with('team-name', [$this->userObjectId], [$this->userObjectId])
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
             ->willReturn($aadGroup);
         $this->azureApiClient
             ->expects($this->once())
@@ -137,7 +138,7 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('createGroup')
-            ->with('team-name', [$this->userObjectId], [$this->userObjectId])
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
             ->willReturn($aadGroup);
 
         $this->githubApiClient
@@ -164,7 +165,7 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('createGroup')
-            ->with('team-name', [$this->userObjectId], [$this->userObjectId])
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
             ->willReturn($aadGroup);
 
         $githubTeam = $this->createMock(GitHubTeam::class);
@@ -198,7 +199,7 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('createGroup')
-            ->with('team-name', [$this->userObjectId], [$this->userObjectId])
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
             ->willReturn($aadGroup);
 
         $githubTeam = $this->createMock(GitHubTeam::class);
@@ -234,7 +235,7 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('createGroup')
-            ->with('team-name', [$this->userObjectId], [$this->userObjectId])
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
             ->willReturn($aadGroup);
 
         $githubTeam = $this->createMock(GitHubTeam::class);
@@ -251,6 +252,33 @@ class RunnerTest extends TestCase {
         $this->assertTrue($teamResult->added());
         $this->assertFalse($teamResult->failed());
         $this->assertFalse($teamResult->skipped());
+    }
+
+    public function getInvalidTeams() : array {
+        return [
+            'missing name' => [
+                ['description' => 'team description'],
+                'Missing team name: description:',
+            ],
+            'missing description' => [
+                ['name' => 'team-name'],
+                'Missing team description:',
+            ],
+            'invalid name' => [
+                ['name' => 'æøå', 'description' => 'team description'],
+                'Invalid team name: æøå',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider getInvalidTeams
+     * @covers ::run
+     * @covers ::validateTeams
+     */
+    public function testThrowsExceptionOnInvalidTeamsArray(array $team, string $expectedErrorMessage) : void {
+        $this->expectExceptionObject(new InvalidArgumentException($expectedErrorMessage));
+        $this->runRunner([$team]);
     }
 
     /**

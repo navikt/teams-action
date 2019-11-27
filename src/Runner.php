@@ -2,7 +2,9 @@
 namespace NAV\Teams;
 
 use NAV\Teams\Runner\TeamResult;
+use NAV\Teams\Exceptions\InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
+use Symfony\Component\Yaml\Yaml;
 
 class Runner {
     /**
@@ -38,12 +40,32 @@ class Runner {
     }
 
     /**
+     * Validate the teams list
+     *
+     * @param array $teams List of teams
+     * @throws InvalidArgumentException
+     * @return void
+     */
+    private function validateTeams(array $teams) : void {
+        foreach ($teams as $team) {
+            if (empty($team['name'])) {
+                throw new InvalidArgumentException(sprintf('Missing team name: %s', Yaml::dump($team)));
+            } else if (empty($team['description'])) {
+                throw new InvalidArgumentException(sprintf('Missing team description: %s', Yaml::dump($team)));
+            } else if (0 === preg_match('/^[a-z][a-z0-9-]{3,29}(?<!-)$/', $team['name'])) {
+                throw new InvalidArgumentException(sprintf('Invalid team name: %s', $team['name']));
+            }
+        }
+    }
+
+    /**
      * Run the action
      *
      * @param array $teams List of teams
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $googleSuiteProvisioningApplicationId
      * @param string $googleSuiteProvisioningApplicationRoleId
+     * @throws InvalidArgumentException Throws an exception if the teams array is invalid
      * @return TeamResult[]
      */
     public function run(
@@ -52,6 +74,8 @@ class Runner {
         string $googleSuiteProvisioningApplicationId,
         string $googleSuiteProvisioningApplicationRoleId
     ) : array {
+        $this->validateTeams($teams);
+
         $result = [];
 
         foreach ($teams as $team) {
@@ -81,7 +105,7 @@ class Runner {
             }
 
             try {
-                $aadGroup = $this->azureApiClient->createGroup($teamName, [$userObjectId], [$userObjectId]);
+                $aadGroup = $this->azureApiClient->createGroup($teamName, $teamDescription, [$userObjectId], [$userObjectId]);
             } catch (ClientException $e) {
                 $result[$teamName] = $teamResult->fail(sprintf(
                     'Unable to create Azure AD group: "%s". Error message: %s',

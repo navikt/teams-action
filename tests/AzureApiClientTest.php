@@ -144,6 +144,7 @@ class AzureApiClientTest extends TestCase {
 
         $aadGroup = (new AzureApiClient('id', 'secret', $authClient, $httpClient))->createGroup(
             'group name',
+            'group description',
             ['Owner1@nav.no']
         );
 
@@ -156,6 +157,7 @@ class AzureApiClientTest extends TestCase {
         $body = json_decode($request->getBody()->getContents(), true);
 
         $this->assertSame('group name', $body['displayName'], 'Group name not correct');
+        $this->assertStringStartsWith('group description', $body['description'], 'Group description not correct');
         $this->assertSame('group name', $body['mailNickname'], 'Mail not correct');
         $this->assertArrayHasKey('owners@odata.bind', $body, 'Missing owners list');
         $this->assertSame(['https://graph.microsoft.com/beta/users/Owner1@nav.no'], $body['owners@odata.bind'], 'Invalid owners list');
