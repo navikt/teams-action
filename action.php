@@ -99,4 +99,4 @@ if (hasFailures($results)) {
     exit(1);
 }
 
-echo sprintf('::set-output name=results::%s', json_encode($results));
+echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($results));
