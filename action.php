@@ -2,6 +2,7 @@
 namespace NAV\Teams;
 
 use NAV\Teams\Runner\ResultPrinter;
+use NAV\Teams\Exceptions\InvalidArgumentException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use GuzzleHttp\Exception\ClientException;
@@ -47,12 +48,6 @@ if (empty($teams)) {
     exit;
 }
 
-foreach ($teams as $team) {
-    if (0 === preg_match('/^[a-z][a-z0-9-]{3,29}(?<!-)$/', $team)) {
-        fail(sprintf('Invalid team name: %s', $team));
-    }
-}
-
 try {
     $azureApiClient = new AzureApiClient(
         getenv('AZURE_AD_APP_ID'),
@@ -86,7 +81,12 @@ $googleSuiteProvisioningApplicationId = getenv('AZURE_AD_GOOGLE_PROVISIONING_APP
 $appRoleId = getenv('AZURE_AD_GOOGLE_PROVISIONING_ROLE_ID');
 
 $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
-$results = $runner->run($teams, $committerSamlId, $googleSuiteProvisioningApplicationId, $appRoleId);
+
+try {
+    $results = $runner->run($teams, $committerSamlId, $googleSuiteProvisioningApplicationId, $appRoleId);
+} catch (InvalidArgumentException $e) {
+    fail($e->getMessage());
+}
 
 (new ResultPrinter())->print($results);
 

@@ -89,11 +89,12 @@ class AzureApiClient {
      * Create a group
      *
      * @param string $groupName The name of the group
+     * @param string $description The description of the group
      * @param string[] $owners List of users to be added as owners
      * @param string[] $members List of users to be added as members
      * @return AzureAdGroup
      */
-    public function createGroup(string $groupName, array $owners = [], array $members = []) : AzureAdGroup {
+    public function createGroup(string $groupName, string $description, array $owners = [], array $members = []) : AzureAdGroup {
         $prefixer = function(string $user) : string {
             return sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
         };
@@ -101,7 +102,7 @@ class AzureApiClient {
         $response = $this->httpClient->post('groups', [
             'json' => array_filter([
                 'displayName'        => $groupName,
-                'description'        => 'Team group created by https://github.com/navikt/teams',
+                'description'        => sprintf('%s (Team group created by https://github.com/navikt/teams)', $description),
                 'securityEnabled'    => true,
                 'mailEnabled'        => true,
                 'mailNickname'       => $groupName,
