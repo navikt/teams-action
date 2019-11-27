@@ -48,8 +48,12 @@ if (empty($teams)) {
 }
 
 foreach ($teams as $team) {
-    if (0 === preg_match('/^[a-z][a-z0-9-]{3,29}(?<!-)$/', $team)) {
-        fail(sprintf('Invalid team name: %s', $team));
+    if (empty($team['name'])) {
+        fail(sprintf('Missing team name: %s', Yaml::dump($team)));
+    } else if (empty($team['description'])) {
+        fail(sprintf('Missing team description: %s', Yaml::dump($team)));
+    } else if (0 === preg_match('/^[a-z][a-z0-9-]{3,29}(?<!-)$/', $team['name'])) {
+        fail(sprintf('Invalid team name: %s', $team['name']));
     }
 }
 
