@@ -54,8 +54,10 @@ class Runner {
     ) : array {
         $result = [];
 
-        foreach ($teams as $teamName) {
-            $teamResult = new TeamResult($teamName);
+        foreach ($teams as $team) {
+            $teamName        = $team['name'];
+            $teamDescription = $team['description'];
+            $teamResult      = new TeamResult($teamName);
 
             $aadGroup = $this->azureApiClient->getGroupByName($teamName);
 

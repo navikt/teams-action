@@ -55,7 +55,7 @@ class RunnerTest extends TestCase {
             ->with('team-name')
             ->willReturn($this->createConfiguredMock(AzureAdGroup::class, ['getId' => 'group-id']));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Group already exists in Azure AD with ID "group-id", skipping...', $teamResult->getMessage());
@@ -74,7 +74,7 @@ class RunnerTest extends TestCase {
             ->with('team-name')
             ->willReturn($this->createConfiguredMock(GitHubTeam::class, ['getId' => 123]));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Team "team-name" (ID: 123) already exists on GitHub, skipping...', $teamResult->getMessage());
@@ -93,7 +93,7 @@ class RunnerTest extends TestCase {
             ->with('team-name', [$this->userObjectId], [$this->userObjectId])
             ->willThrowException($this->getClientException('error message'));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to create Azure AD group: "team-name". Error message: error message', $teamResult->getMessage());
@@ -119,7 +119,7 @@ class RunnerTest extends TestCase {
             ->with($aadGroup, $this->googleSuiteProvisioningApplicationId, $this->googleSuiteProvisioningApplicationRoleId)
             ->willThrowException($this->getClientException('error message'));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to add the Azure AD group to the Google Suite Provisioning application', $teamResult->getMessage());
@@ -146,7 +146,7 @@ class RunnerTest extends TestCase {
             ->with('team-name')
             ->willThrowException($this->getClientException('error message'));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to create GitHub team "team-name". Error message: error message', $teamResult->getMessage());
@@ -180,7 +180,7 @@ class RunnerTest extends TestCase {
             ->with($githubTeam, $aadGroup)
             ->willThrowException($this->getClientException('error message'));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to sync GitHub team and Azure AD group. Error message: error message', $teamResult->getMessage());
@@ -215,7 +215,7 @@ class RunnerTest extends TestCase {
             ->with('team-name')
             ->willThrowException($this->getClientException('error message'));
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertSame('Unable to create Nais deployment key. Error message: error message', $teamResult->getMessage());
@@ -245,7 +245,7 @@ class RunnerTest extends TestCase {
             ->with('team-name')
             ->willReturn($githubTeam);
 
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner(['team-name']));
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
         $this->assertSame('team-name', $teamResult->getTeamName());
         $this->assertTrue($teamResult->added());
