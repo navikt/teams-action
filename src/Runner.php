@@ -125,7 +125,7 @@ class Runner {
             }
 
             try {
-                $githubTeam = $this->githubApiClient->createTeam($teamName);
+                $githubTeam = $this->githubApiClient->createTeam($teamName, $teamDescription);
             } catch (ClientException $e) {
                 $result[$teamName] = $teamResult->fail(sprintf(
                     'Unable to create GitHub team "%s". Error message: %s',

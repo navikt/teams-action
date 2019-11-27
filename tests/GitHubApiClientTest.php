@@ -85,7 +85,7 @@ class GitHubApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $githubTeam = (new GitHubApiClient('access-token', $httpClient))->createTeam('team-name');
+        $githubTeam = (new GitHubApiClient('access-token', $httpClient))->createTeam('team-name', 'team description');
 
         $this->assertInstanceOf(GitHubTeam::class, $githubTeam);
         $this->assertCount(1, $clientHistory, 'Expected one request');
@@ -97,6 +97,7 @@ class GitHubApiClientTest extends TestCase {
         $body = json_decode($request->getBody()->getContents(), true);
 
         $this->assertSame('team-name', $body['name'], 'Team name not correct');
+        $this->assertStringStartsWith('team description', $body['description'], 'Team description not correct');
     }
 
     /**

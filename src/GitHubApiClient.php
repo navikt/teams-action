@@ -52,15 +52,16 @@ class GitHubApiClient {
     /**
      * Create a new team
      *
-     * @param string $teamName The name of the team
+     * @param string $name The name of the team
+     * @param string $description The description of the team
      * @throws ClientException
      * @return GitHubTeam
      */
-    public function createTeam(string $teamName) : GitHubTeam {
+    public function createTeam(string $name, string $description) : GitHubTeam {
         $response = $this->httpClient->post('orgs/navikt/teams', [
             'json' => [
-                'name'        => $teamName,
-                'description' => 'Team created by https://github.com/navikt/teams',
+                'name'        => $name,
+                'description' => sprintf('%s (Team created by https://github.com/navikt/teams)', $description),
                 'privacy'     => 'closed'
             ],
         ]);
