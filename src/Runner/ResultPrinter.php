@@ -17,7 +17,7 @@ class ResultPrinter {
             } else if ($teamResult->skipped()) {
                 $output[] = sprintf('%s: (skipped) %s', $teamResult->getTeamName(), $teamResult->getMessage());
             } else {
-                $output[] = sprintf('%s: Created', $teamResult->getTeamName());
+                $output[] = sprintf('%s: Created (Azure AD object ID: %s)', $teamResult->getTeamName(), $teamResult->getGroupId());
             }
         }
 
