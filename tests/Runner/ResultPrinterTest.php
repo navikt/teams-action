@@ -12,7 +12,7 @@ class ResultPrinterTest extends TestCase {
      */
     public function testCanPrintResults() : void {
         $expectedOutput = <<<OUTPUT
-team-name-1: Created
+team-name-1: Created (Azure AD object ID: group-id)
 team-name-2: (error) Could not create GitHub team
 team-name-3: (skipped) Group exists in Azure AD
 OUTPUT;
