@@ -198,4 +198,46 @@ class AzureApiClientTest extends TestCase {
             'resourceId' => 'app-object-id'
         ], json_decode($request->getBody()->getContents(), true), 'Incorrect request body');
     }
+
+    /**
+     * @covers ::getEnterpriseAppGroups
+     */
+    public function testCanGetEnterpriseAppGroups() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    '@odata.nextLink' => 'next-link',
+                    'value' => [['principalId' => 'first-id']],
+                ])),
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    'value' => [['principalId' => 'second-id']],
+                ])),
+                new Response(200, [], json_encode([
+                    'id' => 'first-id',
+                    'displayName' => 'first-group',
+                    'description' => 'first description',
+                ])),
+                new Response(200, [], json_encode([
+                    'id' => 'second-id',
+                    'displayName' => 'second-group',
+                    'description' => 'second description',
+                ])),
+            ],
+            $clientHistory
+        );
+
+        $groups = (new AzureApiClient('id', 'secret', $authClient, $httpClient))->getEnterpriseAppGroups('app-object-id');
+        $this->assertCount(2, $groups);
+        $this->assertCount(4, $clientHistory);
+        $this->assertSame('servicePrincipals/app-object-id/appRoleAssignments?%24select=principalId&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
+        $this->assertSame('groups/first-id', (string) $clientHistory[2]['request']->getUri());
+        $this->assertSame('groups/second-id', (string) $clientHistory[3]['request']->getUri());
+    }
 }

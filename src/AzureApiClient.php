@@ -133,4 +133,32 @@ class AzureApiClient {
             ],
         ]);
     }
+
+    /**
+     * Get all groups connected to a specific enterprise application in Azure AD
+     *
+     * @param string $applicationObjectId The object ID of the application
+     * @return AzureAdGroup[]
+     */
+    public function getEnterpriseAppGroups(string $applicationObjectId) : array {
+        $groups = [];
+        $query = [
+            '$select' => 'principalId',
+            '$top'    => 100
+        ];
+        $nextLink = sprintf('servicePrincipals/%s/appRoleAssignments', $applicationObjectId);
+
+        while ($nextLink) {
+            $response = $this->httpClient->get($nextLink, ['query' => $query]);
+            $body = json_decode($response->getBody()->getContents(), true);
+            $groups = array_merge($groups, $body['value']);
+            $nextLink = $body['@odata.nextLink'] ?? null;
+            $query = []; // We only need the query for the first request as the nextLink will
+                         // inherit query params from the first request
+        }
+
+        return array_map(function(array $group) {
+            return $this->getGroupById($group['principalId']);
+        }, $groups);
+    }
 }
