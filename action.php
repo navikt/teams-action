@@ -10,21 +10,45 @@ use GuzzleHttp\Exception\ClientException;
 
 require __DIR__ . '/vendor/autoload.php';
 
+/**
+ * Exit the script with a non-zero code and an error message
+ *
+ * @param string $message The message to output
+ * @param int $code The exit code
+ * @return void
+ */
 function fail(string $message, int $code = 1) : void {
     echo trim($message) . PHP_EOL;
     exit($code);
 }
 
+/**
+ * Output a debug message
+ *
+ * @param string $message The message to output
+ * @return void
+ */
 function debug(string $message) : void {
     echo trim($message) . PHP_EOL;
 }
 
+/**
+ * Check if there are any failures in a list of TeamResult objects
+ *
+ * @param TeamResult[]
+ * @return bool
+ */
 function hasFailures(array $results) : bool {
     return 0 !== count(array_filter($results, function(TeamResult $result) : bool {
         return $result->failed();
     }));
 }
 
+/**
+ * A list of required environment variables
+ *
+ * @var string[]
+ */
 $requiredEnvVars = [
     'AZURE_AD_APP_ID',
     'AZURE_AD_APP_SECRET',
@@ -84,16 +108,17 @@ if (null === $committerSamlId) {
     fail(sprintf('Unable to find SAML ID for actor: %s', $actor));
 }
 
-$googleSuiteProvisioningApplicationId = getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ID');
-$googleSuiteProvisioningApplicationRoleId = getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID');
-
-$containerApplicationId = getenv('AZURE_AD_CONTAINER_APP_ID');
-$containerApplicationRoleId = getenv('AZURE_AD_CONTAINER_APP_ROLE_ID');
-
 $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
 
 try {
-    $results = $runner->run($teams, $committerSamlId, $googleSuiteProvisioningApplicationId, $googleSuiteProvisioningApplicationRoleId, $containerApplicationId, $containerApplicationRoleId);
+    $results = $runner->run(
+        $teams,
+        $committerSamlId,
+        getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ID'),
+        getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID'),
+        getenv('AZURE_AD_CONTAINER_APP_ID'),
+        getenv('AZURE_AD_CONTAINER_APP_ROLE_ID')
+    );
 } catch (InvalidArgumentException $e) {
     fail($e->getMessage());
 }
@@ -104,4 +129,5 @@ if (hasFailures($results)) {
     exit(1);
 }
 
+// Generate output for following steps in the workflow
 echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($results));
