@@ -65,6 +65,8 @@ class Runner {
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $googleSuiteProvisioningApplicationId
      * @param string $googleSuiteProvisioningApplicationRoleId
+     * @param string $containerApplicationId
+     * @param string $containerApplicationRoleId
      * @throws InvalidArgumentException Throws an exception if the teams array is invalid
      * @return TeamResult[]
      */
@@ -72,7 +74,9 @@ class Runner {
         array $teams,
         string $userObjectId,
         string $googleSuiteProvisioningApplicationId,
-        string $googleSuiteProvisioningApplicationRoleId
+        string $googleSuiteProvisioningApplicationRoleId,
+        string $containerApplicationId,
+        string $containerApplicationRoleId
     ) : array {
         $this->validateTeams($teams);
 
@@ -116,6 +120,13 @@ class Runner {
             }
 
             $teamResult->setGroupId($aadGroup->getId());
+
+            try {
+                $this->azureApiClient->addGroupToEnterpriseApp($aadGroup, $containerApplicationId, $containerApplicationRoleId);
+            } catch (ClientException $e) {
+                $result[$teamName] = $teamResult->fail('Unable to add the Azure AD group to the teams management application');
+                continue;
+            }
 
             try {
                 $this->azureApiClient->addGroupToEnterpriseApp($aadGroup, $googleSuiteProvisioningApplicationId, $googleSuiteProvisioningApplicationRoleId);
