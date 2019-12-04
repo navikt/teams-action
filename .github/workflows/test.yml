@@ -1,4 +1,4 @@
-name: Test and publish
+name: Run tests
 on: [push]
 jobs:
   test:
@@ -31,16 +31,3 @@ jobs:
 
       - name: Run test suite
         run: composer run test
-  publish-to-dockerhub:
-    name: Publish to Dockerhub
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: Publish to Dockerhub
-        uses: elgohr/Publish-Docker-Github-Action@master
-        with:
-          name: navikt/teams-action
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
