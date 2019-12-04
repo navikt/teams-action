@@ -18,6 +18,8 @@ class RunnerTest extends TestCase {
     private $userObjectId = 'user-object-id';
     private $googleSuiteProvisioningApplicationId = 'google-suite-application-id';
     private $googleSuiteProvisioningApplicationRoleId = 'google-suite-application-role-id';
+    private $containerApplicationId = 'container-application-id';
+    private $containerApplicationRoleId = 'conatiner-application-role-id';
 
     public function setUp() : void {
         $this->azureApiClient = $this->createMock(AzureApiClient::class);
@@ -35,15 +37,7 @@ class RunnerTest extends TestCase {
      * @covers ::run
      */
     public function testEmptyTeamList() : void {
-        $this->assertSame(
-            [],
-            $this->runner->run(
-                [],
-                $this->userObjectId,
-                $this->googleSuiteProvisioningApplicationId,
-                $this->googleSuiteProvisioningApplicationRoleId
-            )
-        );
+        $this->assertSame([], $this->runRunner([]));
     }
 
     /**
@@ -106,7 +100,7 @@ class RunnerTest extends TestCase {
     /**
      * @covers ::run
      */
-    public function testHandlesAzureAdGroupNotAddedToGoogleApp() : void {
+    public function testHandlesAzureAdGroupNotAddedToContainerApp() : void {
         $aadGroup = $this->createMock(AzureAdGroup::class);
 
         $this->azureApiClient
@@ -117,8 +111,40 @@ class RunnerTest extends TestCase {
         $this->azureApiClient
             ->expects($this->once())
             ->method('addGroupToEnterpriseApp')
-            ->with($aadGroup, $this->googleSuiteProvisioningApplicationId, $this->googleSuiteProvisioningApplicationRoleId)
+            ->with($aadGroup, $this->containerApplicationId, $this->containerApplicationRoleId)
             ->willThrowException($this->getClientException('error message'));
+
+        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
+        $teamResult = $result['team-name'];
+        $this->assertSame('team-name', $teamResult->getTeamName());
+        $this->assertSame('Unable to add the Azure AD group to the teams management application', $teamResult->getMessage());
+        $this->assertTrue($teamResult->failed());
+        $this->assertFalse($teamResult->added());
+        $this->assertFalse($teamResult->skipped());
+    }
+
+    /**
+     * @covers ::run
+     */
+    public function testHandlesAzureAdGroupNotAddedToGoogleApp() : void {
+        $aadGroup = $this->createMock(AzureAdGroup::class);
+
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('createGroup')
+            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
+            ->willReturn($aadGroup);
+        $this->azureApiClient
+            ->expects($this->exactly(2))
+            ->method('addGroupToEnterpriseApp')
+            ->withConsecutive(
+                [$aadGroup, $this->containerApplicationId, $this->containerApplicationRoleId],
+                [$aadGroup, $this->googleSuiteProvisioningApplicationId, $this->googleSuiteProvisioningApplicationRoleId]
+            )
+            ->will($this->onConsecutiveCalls(
+                null,
+                $this->throwException($this->getClientException('error message'))
+            ));
 
         $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
         $teamResult = $result['team-name'];
@@ -292,7 +318,9 @@ class RunnerTest extends TestCase {
             $teams,
             $this->userObjectId,
             $this->googleSuiteProvisioningApplicationId,
-            $this->googleSuiteProvisioningApplicationRoleId
+            $this->googleSuiteProvisioningApplicationRoleId,
+            $this->containerApplicationId,
+            $this->containerApplicationRoleId
         );
     }
 

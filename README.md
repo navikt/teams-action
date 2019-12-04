@@ -29,9 +29,17 @@ The Azure AD application secret of the application used to access the Microsoft 
 
 ### `AZURE_AD_GOOGLE_PROVISIONING_APP_ID`
 
-Each group that is created by this action will be added to this enterprise application. This is the object ID of the application.
+Each group that is created by this action will be added to this enterprise application. This is the object ID of the application. This application handles syncing of groups to Google.
 
-### `AZURE_AD_GOOGLE_PROVISIONING_ROLE_ID`
+### `AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID`
+
+When adding groups to the enterprise application they will receive this role.
+
+### `AZURE_AD_CONTAINER_APP_ID`
+
+Each group that is created by this action will be added to this enterprise application. This is the object ID of the application. This application is used to easily identify teams managed by this solution.
+
+### `AZURE_AD_CONTAINER_APP_ROLE_ID`
 
 When adding groups to the enterprise application they will receive this role.
 

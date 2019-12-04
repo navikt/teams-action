@@ -29,7 +29,9 @@ $requiredEnvVars = [
     'AZURE_AD_APP_ID',
     'AZURE_AD_APP_SECRET',
     'AZURE_AD_GOOGLE_PROVISIONING_APP_ID',
-    'AZURE_AD_GOOGLE_PROVISIONING_ROLE_ID',
+    'AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID',
+    'AZURE_AD_CONTAINER_APP_ID',
+    'AZURE_AD_CONTAINER_APP_ROLE_ID',
     'GITHUB_ACTOR',
     'GITHUB_PAT',
     'TEAMS_YAML_PATH',
@@ -83,12 +85,15 @@ if (null === $committerSamlId) {
 }
 
 $googleSuiteProvisioningApplicationId = getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ID');
-$appRoleId = getenv('AZURE_AD_GOOGLE_PROVISIONING_ROLE_ID');
+$googleSuiteProvisioningApplicationRoleId = getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID');
+
+$containerApplicationId = getenv('AZURE_AD_CONTAINER_APP_ID');
+$containerApplicationRoleId = getenv('AZURE_AD_CONTAINER_APP_ROLE_ID');
 
 $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
 
 try {
-    $results = $runner->run($teams, $committerSamlId, $googleSuiteProvisioningApplicationId, $appRoleId);
+    $results = $runner->run($teams, $committerSamlId, $googleSuiteProvisioningApplicationId, $googleSuiteProvisioningApplicationRoleId, $containerApplicationId, $containerApplicationRoleId);
 } catch (InvalidArgumentException $e) {
     fail($e->getMessage());
 }
