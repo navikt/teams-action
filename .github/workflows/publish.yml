@@ -1,0 +1,19 @@
+name: Publish docker image
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  publish:
+    name: Publish to Dockerhub
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Publish to Dockerhub
+        uses: elgohr/Publish-Docker-Github-Action@v2
+        with:
+          name: navikt/teams-action
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tag_names: true
