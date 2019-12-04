@@ -60,3 +60,7 @@ Path to where the teams YAML file is located. Documentation regarding this file 
 ### `NAIS_DEPLOYMENT_API_SECRET`
 
 Hex-encoded secret used to create Nais deployment key for the teams.
+
+## Release a new version
+
+There is a workflow that runs when a tag starting with `v` is pushed, which publishes a docker image to [dockerhub](https://hub.docker.com/repository/docker/navikt/teams-action).
