@@ -23,6 +23,8 @@ class RunnerTest extends TestCase {
     private $googleSuiteProvisioningApplicationRoleId = 'google-suite-application-role-id';
     private $containerApplicationId = 'container-application-id';
     private $containerApplicationRoleId = 'conatiner-application-role-id';
+    private $output;
+    private $runner;
 
     public function setUp() : void {
         $this->azureApiClient = $this->createMock(AzureApiClient::class);
@@ -262,15 +264,13 @@ class RunnerTest extends TestCase {
                 'groupId'  => 'new-team-id',
             ],
         ], json_decode(json_encode($result), true));
-
-
     }
 
     /**
      * Execute the runner
      *
      * @param array $teams
-     * @return array
+     * @return Result
      */
     private function runRunner(array $teams) : Result {
         return $this->runner->run(
