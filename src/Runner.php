@@ -79,7 +79,7 @@ class Runner {
      * @param string $containerApplicationId
      * @param string $containerApplicationRoleId
      * @throws InvalidArgumentException Throws an exception if the teams array is invalid
-     * @return Output
+     * @return Result
      */
     public function run(
         array $teams,
@@ -110,7 +110,6 @@ class Runner {
             $teamDescription = $team['description'];
             $resultEntry     = new ResultEntry($teamName);
 
-            /** @var AzureAdGroup */
             $aadGroup = $this->azureApiClient->getGroupByName($teamName);
 
             if (null !== $aadGroup) {
@@ -130,10 +129,7 @@ class Runner {
                 ));
 
                 if ($aadGroup->getDescription() !== $teamDescription) {
-                    $this->output->debug($teamName, sprintf(
-                        'Group description in Azure AD is out of sync, updating...',
-                        $aadGroup->getId()
-                    ));
+                    $this->output->debug($teamName, 'Group description in Azure AD is out of sync, updating...');
                     $this->azureApiClient->setGroupDescription($aadGroup->getId(), $teamDescription);
                 }
             } else {
