@@ -1,9 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams\Runner;
 
-use JsonSerializable;
-
-class Output implements JsonSerializable {
+class Output {
     /**
      * Message class
      *
@@ -76,14 +74,5 @@ class Output implements JsonSerializable {
      */
     private function normalize(string $message) : string {
         return trim($message);
-    }
-
-    /**
-     * Serialize as JSON
-     *
-     * @return array
-     */
-    public function jsonSerialize() : array {
-        return [];
     }
 }

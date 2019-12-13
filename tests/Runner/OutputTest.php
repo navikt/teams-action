@@ -25,6 +25,7 @@ class OutputTest extends TestCase {
     /**
      * @dataProvider getMessages
      * @covers ::debug
+     * @covers ::normalize
      */
     public function testCanOutputDebugMessage(string $team, string $rawMessage, string $output) : void {
         $this->expectOutputString($output);
@@ -34,6 +35,7 @@ class OutputTest extends TestCase {
     /**
      * @dataProvider getMessages
      * @covers ::failure
+     * @covers ::normalize
      */
     public function testCanOutputFailureMessage(string $team, string $rawMessage, string $output) : void {
         $this->expectOutputString($output);
