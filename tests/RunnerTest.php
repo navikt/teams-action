@@ -282,13 +282,4 @@ class RunnerTest extends TestCase {
             $this->containerApplicationRoleId
         );
     }
-
-    /**
-     * Get a Guzzle client exception
-     *
-     * @param string $message The error message
-     */
-    private function getClientException(string $message) : ClientException {
-        return new ClientException($message, $this->createMock(RequestInterface::class));
-    }
 }
