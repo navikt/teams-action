@@ -117,6 +117,27 @@ class AzureApiClient {
     }
 
     /**
+     * Set group description
+     *
+     * @param string $groupId The ID of the group
+     * @param string $description The new description
+     * @return bool Returns true on success or false otherwise
+     */
+    public function setGroupDescription(string $groupId, string $description) : bool {
+        try {
+            $this->httpClient->patch(sprintf('groups/%s', $groupId), [
+                'json' => [
+                    'description' => $description,
+                ],
+            ]);
+        } catch (ClientException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Add Azure AD group to an enterprise application
      *
      * @param AzureAdGroup $group The group to add
@@ -143,10 +164,10 @@ class AzureApiClient {
     public function getEnterpriseAppGroups(string $applicationObjectId) : array {
         $groups = [];
         $query = [
-            '$select' => 'principalId',
+            '$select' => join(',', ['principalId', 'principalType']),
             '$top'    => 100
         ];
-        $nextLink = sprintf('servicePrincipals/%s/appRoleAssignments', $applicationObjectId);
+        $nextLink = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
 
         while ($nextLink) {
             $response = $this->httpClient->get($nextLink, ['query' => $query]);
@@ -159,6 +180,8 @@ class AzureApiClient {
 
         return array_map(function(array $group) {
             return $this->getGroupById($group['principalId']);
-        }, $groups);
+        }, array_filter($groups, function(array $group) : bool {
+            return 'Group' === $group['principalType'];
+        }));
     }
 }

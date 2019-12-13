@@ -7,8 +7,6 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Middleware;
 
 /**
@@ -71,7 +69,7 @@ class AzureApiClientTest extends TestCase {
             [new Response(200, [], '{"access_token": "some secret token"}')]
         );
         $httpClient = $this->getMockClient(
-            [new ClientException('group not found', new Request('GET', 'groups/some-id'))]
+            [new Response(404)]
         );
 
         $this->assertNull((new AzureApiClient('id', 'secret', $authClient, $httpClient))->getGroupById('some-id'));
@@ -105,7 +103,7 @@ class AzureApiClientTest extends TestCase {
             [new Response(200, [], '{"access_token": "some secret token"}')]
         );
         $httpClient = $this->getMockClient(
-            [new ClientException('group not found', new Request('GET', 'groups'))]
+            [new Response(404)]
         );
 
         $this->assertNull((new AzureApiClient('id', 'secret', $authClient, $httpClient))->getGroupByName('some display name'));
@@ -212,11 +210,16 @@ class AzureApiClientTest extends TestCase {
                 new Response(200, [], json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
-                    'value' => [['principalId' => 'first-id']],
+                    'value' => [['principalId' => 'first-id', 'principalType' => 'Group']],
                 ])),
                 new Response(200, [], json_encode([
                     '@odata.context' => 'context-url',
-                    'value' => [['principalId' => 'second-id']],
+                    '@odata.nextLink' => 'next-link',
+                    'value' => [['principalId' => 'second-id', 'principalType' => 'Group']],
+                ])),
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    'value' => [['principalId' => 'third-id', 'principalType' => 'User']],
                 ])),
                 new Response(200, [], json_encode([
                     'id' => 'first-id',
@@ -234,10 +237,42 @@ class AzureApiClientTest extends TestCase {
 
         $groups = (new AzureApiClient('id', 'secret', $authClient, $httpClient))->getEnterpriseAppGroups('app-object-id');
         $this->assertCount(2, $groups);
-        $this->assertCount(4, $clientHistory);
-        $this->assertSame('servicePrincipals/app-object-id/appRoleAssignments?%24select=principalId&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertCount(5, $clientHistory);
+        $this->assertSame('servicePrincipals/app-object-id/appRoleAssignedTo?%24select=principalId%2CprincipalType&%24top=100', (string) $clientHistory[0]['request']->getUri());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
-        $this->assertSame('groups/first-id', (string) $clientHistory[2]['request']->getUri());
-        $this->assertSame('groups/second-id', (string) $clientHistory[3]['request']->getUri());
+        $this->assertSame('next-link', (string) $clientHistory[2]['request']->getUri());
+        $this->assertSame('groups/first-id', (string) $clientHistory[3]['request']->getUri());
+        $this->assertSame('groups/second-id', (string) $clientHistory[4]['request']->getUri());
+    }
+
+    /**
+     * @covers ::setGroupDescription
+     */
+    public function testCanSetGroupDescription() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([new Response(200)], $clientHistory);
+
+        $this->assertTrue((new AzureApiClient('id', 'secret', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
+        $this->assertCount(1, $clientHistory);
+        $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('{"description":"description"}', (string) $clientHistory[0]['request']->getBody());
+    }
+
+    /**
+     * @covers ::setGroupDescription
+     */
+    public function testSettingGroupDescriptionReturnsFalseOnFailure() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([new Response(404)], $clientHistory);
+
+        $this->assertFalse((new AzureApiClient('id', 'secret', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
+        $this->assertCount(1, $clientHistory);
+        $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
     }
 }
