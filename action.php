@@ -110,8 +110,4 @@ try {
     fail($e->getMessage());
 }
 
-echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($result)) . PHP_EOL;
-
-if ($result->isFailure()) {
-    exit(1);
-}
+echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($result));
