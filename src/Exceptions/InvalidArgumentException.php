@@ -3,4 +3,4 @@ namespace NAV\Teams\Exceptions;
 
 use InvalidArgumentException as SplInvalidArgumentException;
 
-class InvalidArgumentException extends SplInvalidArgumentException implements Exception {}
+class InvalidArgumentException extends SplInvalidArgumentException {}
