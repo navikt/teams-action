@@ -142,7 +142,6 @@ class Runner {
                         'Unable to create Azure AD group, error message: %s',
                         $e->getMessage())
                     );
-                    $result->fail();
                     continue;
                 }
 
@@ -155,7 +154,6 @@ class Runner {
                     $this->azureApiClient->addGroupToEnterpriseApp($aadGroup, $containerApplicationId, $containerApplicationRoleId);
                 } catch (ClientException $e) {
                     $this->output->failure($teamName, 'Unable to mark the Azure AD group as "managed", continuing to the next team...');
-                    $result->fail();
                     continue;
                 }
             }
@@ -197,14 +195,12 @@ class Runner {
                             'Unable to sync Azure AD group and GitHub team, error message: %s',
                             $e->getMessage()
                         ));
-                        $result->fail();
                     }
                 } catch (ClientException $e) {
                     $this->output->failure($teamName, sprintf(
                         'Unable to create GitHub team, error message: %s',
                         $e->getMessage())
                     );
-                    $result->fail();
                 }
             }
 
@@ -216,7 +212,6 @@ class Runner {
                     'Unable to provision NAIS deployment key, error message: %s',
                     $e->getMessage()
                 ));
-                $result->fail();
             }
         }
 
