@@ -2,8 +2,7 @@
 namespace NAV\Teams;
 
 use NAV\Teams\Exceptions\InvalidArgumentException;
-use NAV\Teams\Runner\ResultPrinter;
-use NAV\Teams\Runner\TeamResult;
+use NAV\Teams\Exceptions\RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use GuzzleHttp\Exception\ClientException;
@@ -30,18 +29,6 @@ function fail(string $message, int $code = 1) : void {
  */
 function debug(string $message) : void {
     echo trim($message) . PHP_EOL;
-}
-
-/**
- * Check if there are any failures in a list of TeamResult objects
- *
- * @param TeamResult[]
- * @return bool
- */
-function hasFailures(array $results) : bool {
-    return 0 !== count(array_filter($results, function(TeamResult $result) : bool {
-        return $result->failed();
-    }));
 }
 
 /**
@@ -111,7 +98,7 @@ if (null === $committerSamlId) {
 $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
 
 try {
-    $results = $runner->run(
+    $result = $runner->run(
         $teams,
         $committerSamlId,
         getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ID'),
@@ -119,15 +106,12 @@ try {
         getenv('AZURE_AD_CONTAINER_APP_ID'),
         getenv('AZURE_AD_CONTAINER_APP_ROLE_ID')
     );
-} catch (InvalidArgumentException $e) {
+} catch (InvalidArgumentException | RuntimeException $e) {
     fail($e->getMessage());
 }
 
-(new ResultPrinter())->print($results);
+echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($result)) . PHP_EOL;
 
-if (hasFailures($results)) {
+if ($result->isFailure()) {
     exit(1);
 }
-
-// Generate output for following steps in the workflow
-echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($results));
