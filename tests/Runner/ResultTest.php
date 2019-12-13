@@ -40,15 +40,4 @@ class ResultTest extends TestCase {
 
         $this->assertSame($expectedJson, json_encode($result), 'Incorrect JSON serialization');
     }
-
-    /**
-     * @covers ::isFailure
-     * @covers ::fail
-     */
-    public function testCanMarkResultAsFailed() : void {
-        $result = new Result();
-        $this->assertFalse($result->isFailure(), 'Did not expect result to be a failure');
-        $result->fail();
-        $this->assertTrue($result->isFailure(), 'Expected result to be a failure');
-    }
 }
