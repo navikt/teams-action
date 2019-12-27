@@ -37,6 +37,7 @@ class Runner {
      * @param AzureApiClient $azureApiClient
      * @param GitHubApiClient $githubApiClient
      * @param NaisDeploymentApiClient $naisDeploymentApiClient
+     * @param Output $output
      */
     public function __construct(
         AzureApiClient $azureApiClient,
@@ -120,8 +121,6 @@ class Runner {
                     ));
                     continue;
                 }
-
-                $resultEntry->setGroupId($aadGroup->getId());
 
                 $this->output->debug($teamName, sprintf(
                     'Group already exists in Azure AD (ID "%s")',
