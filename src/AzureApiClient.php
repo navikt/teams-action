@@ -117,6 +117,27 @@ class AzureApiClient {
     }
 
     /**
+     * Set group description
+     *
+     * @param string $groupId The ID of the group
+     * @param string $description The new description
+     * @return bool Returns true on success or false otherwise
+     */
+    public function setGroupDescription(string $groupId, string $description) : bool {
+        try {
+            $this->httpClient->patch(sprintf('groups/%s', $groupId), [
+                'json' => [
+                    'description' => $description,
+                ],
+            ]);
+        } catch (ClientException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Add Azure AD group to an enterprise application
      *
      * @param AzureAdGroup $group The group to add
@@ -132,5 +153,35 @@ class AzureApiClient {
                 'resourceId'  => $applicationObjectId,
             ],
         ]);
+    }
+
+    /**
+     * Get all groups connected to a specific enterprise application in Azure AD
+     *
+     * @param string $applicationObjectId The object ID of the application
+     * @return AzureAdGroup[]
+     */
+    public function getEnterpriseAppGroups(string $applicationObjectId) : array {
+        $groups = [];
+        $query = [
+            '$select' => join(',', ['principalId', 'principalType']),
+            '$top'    => 100
+        ];
+        $nextLink = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
+
+        while ($nextLink) {
+            $response = $this->httpClient->get($nextLink, ['query' => $query]);
+            $body = json_decode($response->getBody()->getContents(), true);
+            $groups = array_merge($groups, $body['value']);
+            $nextLink = $body['@odata.nextLink'] ?? null;
+            $query = []; // We only need the query for the first request as the nextLink will
+                         // inherit query params from the first request
+        }
+
+        return array_map(function(array $group) {
+            return $this->getGroupById($group['principalId']);
+        }, array_filter($groups, function(array $group) : bool {
+            return 'Group' === $group['principalType'];
+        }));
     }
 }

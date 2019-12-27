@@ -61,7 +61,7 @@ class GitHubApiClient {
         $response = $this->httpClient->post('orgs/navikt/teams', [
             'json' => [
                 'name'        => $name,
-                'description' => sprintf('%s (Team created by https://github.com/navikt/teams)', $description),
+                'description' => $description,
                 'privacy'     => 'closed'
             ],
         ]);

@@ -1,10 +1,13 @@
 <?php declare(strict_types=1);
 namespace NAV\Teams;
 
-use GuzzleHttp\Exception\ClientException;
 use NAV\Teams\Exceptions\InvalidArgumentException;
+use NAV\Teams\Exceptions\RuntimeException;
 use NAV\Teams\Models\AzureAdGroup;
 use NAV\Teams\Models\GitHubTeam;
+use NAV\Teams\Runner\Output;
+use NAV\Teams\Runner\Result;
+use GuzzleHttp\Exception\ClientException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -20,264 +23,21 @@ class RunnerTest extends TestCase {
     private $googleSuiteProvisioningApplicationRoleId = 'google-suite-application-role-id';
     private $containerApplicationId = 'container-application-id';
     private $containerApplicationRoleId = 'conatiner-application-role-id';
+    private $output;
+    private $runner;
 
     public function setUp() : void {
         $this->azureApiClient = $this->createMock(AzureApiClient::class);
         $this->githubApiClient = $this->createMock(GitHubApiClient::class);
         $this->naisDeploymentApiClient = $this->createMock(NaisDeploymentApiClient::class);
+        $this->output = $this->createMock(Output::class);
 
         $this->runner = new Runner(
             $this->azureApiClient,
             $this->githubApiClient,
-            $this->naisDeploymentApiClient
+            $this->naisDeploymentApiClient,
+            $this->output
         );
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testEmptyTeamList() : void {
-        $this->assertSame([], $this->runRunner([]));
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesAzureAdGroupAlreadyExists() : void {
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('getGroupByName')
-            ->with('team-name')
-            ->willReturn($this->createConfiguredMock(AzureAdGroup::class, ['getId' => 'group-id']));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Group already exists in Azure AD with ID "group-id", skipping...', $teamResult->getMessage());
-        $this->assertTrue($teamResult->skipped());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->failed());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesGitHubTeamAlreadyExists() : void {
-        $this->githubApiClient
-            ->expects($this->once())
-            ->method('getTeam')
-            ->with('team-name')
-            ->willReturn($this->createConfiguredMock(GitHubTeam::class, ['getId' => 123]));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Team "team-name" (ID: 123) already exists on GitHub, skipping...', $teamResult->getMessage());
-        $this->assertTrue($teamResult->skipped());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->failed());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesAzureAdGroupCreationFailure() : void {
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willThrowException($this->getClientException('error message'));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Unable to create Azure AD group: "team-name". Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failed());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->skipped());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesAzureAdGroupNotAddedToContainerApp() : void {
-        $aadGroup = $this->createMock(AzureAdGroup::class);
-
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($aadGroup);
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('addGroupToEnterpriseApp')
-            ->with($aadGroup, $this->containerApplicationId, $this->containerApplicationRoleId)
-            ->willThrowException($this->getClientException('error message'));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Unable to add the Azure AD group to the teams management application', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failed());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->skipped());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesAzureAdGroupNotAddedToGoogleApp() : void {
-        $aadGroup = $this->createMock(AzureAdGroup::class);
-
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($aadGroup);
-        $this->azureApiClient
-            ->expects($this->exactly(2))
-            ->method('addGroupToEnterpriseApp')
-            ->withConsecutive(
-                [$aadGroup, $this->containerApplicationId, $this->containerApplicationRoleId],
-                [$aadGroup, $this->googleSuiteProvisioningApplicationId, $this->googleSuiteProvisioningApplicationRoleId]
-            )
-            ->will($this->onConsecutiveCalls(
-                null,
-                $this->throwException($this->getClientException('error message'))
-            ));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Unable to add the Azure AD group to the Google Suite Provisioning application', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failed());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->skipped());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesGitHubTeamCreationFailure() : void {
-        $aadGroup = $this->createMock(AzureAdGroup::class);
-
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($aadGroup);
-
-        $this->githubApiClient
-            ->expects($this->once())
-            ->method('createTeam')
-            ->with('team-name', 'team description')
-            ->willThrowException($this->getClientException('error message'));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Unable to create GitHub team "team-name". Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failed());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->skipped());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesGitHubTeamSyncFailure() : void {
-        $aadGroup = $this->createMock(AzureAdGroup::class);
-
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($aadGroup);
-
-        $githubTeam = $this->createMock(GitHubTeam::class);
-
-        $this->githubApiClient
-            ->expects($this->once())
-            ->method('createTeam')
-            ->with('team-name', 'team description')
-            ->willReturn($githubTeam);
-        $this->githubApiClient
-            ->expects($this->once())
-            ->method('syncTeamAndGroup')
-            ->with($githubTeam, $aadGroup)
-            ->willThrowException($this->getClientException('error message'));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Unable to sync GitHub team and Azure AD group. Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failed());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->skipped());
-    }
-
-    /**
-     * @covers ::run
-     */
-    public function testHandlesNaisDeploymentKeyProvisioningFailure() : void {
-        $aadGroup = $this->createMock(AzureAdGroup::class);
-
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($aadGroup);
-
-        $githubTeam = $this->createMock(GitHubTeam::class);
-
-        $this->githubApiClient
-            ->expects($this->once())
-            ->method('createTeam')
-            ->with('team-name', 'team description')
-            ->willReturn($githubTeam);
-
-        $this->naisDeploymentApiClient
-            ->expects($this->once())
-            ->method('provisionTeamKey')
-            ->with('team-name')
-            ->willThrowException($this->getClientException('error message'));
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertSame('Unable to create Nais deployment key. Error message: error message', $teamResult->getMessage());
-        $this->assertTrue($teamResult->failed());
-        $this->assertFalse($teamResult->added());
-        $this->assertFalse($teamResult->skipped());
-    }
-
-    /**
-     * @covers ::run
-     * @covers ::__construct
-     */
-    public function testHandlesTeamCreation() : void {
-        $aadGroup = $this->createMock(AzureAdGroup::class);
-
-        $this->azureApiClient
-            ->expects($this->once())
-            ->method('createGroup')
-            ->with('team-name', 'team description', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($aadGroup);
-
-        $githubTeam = $this->createMock(GitHubTeam::class);
-
-        $this->githubApiClient
-            ->expects($this->once())
-            ->method('createTeam')
-            ->with('team-name', 'team description')
-            ->willReturn($githubTeam);
-
-        $this->assertArrayHasKey('team-name', $result = $this->runRunner([['name' => 'team-name', 'description' => 'team description']]));
-        $teamResult = $result['team-name'];
-        $this->assertSame('team-name', $teamResult->getTeamName());
-        $this->assertTrue($teamResult->added());
-        $this->assertFalse($teamResult->failed());
-        $this->assertFalse($teamResult->skipped());
     }
 
     public function getInvalidTeams() : array {
@@ -308,12 +68,211 @@ class RunnerTest extends TestCase {
     }
 
     /**
+     * @covers ::run
+     * @covers ::validateTeams
+     */
+    public function testThrowsExceptionWhenFailingToFetchManagedTeams() : void {
+        $this->expectExceptionObject(new RuntimeException('Unable to fetch managed teams, aborting...'));
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('getEnterpriseAppGroups')
+            ->with($this->containerApplicationId)
+            ->willReturn([]);
+
+        $this->runRunner([['name' => 'team', 'description' => 'some description']]);
+    }
+
+    /**
+     * @covers ::run
+     * @covers ::validateTeams
+     */
+    public function testWillSkipNonManagedGroups() : void {
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('getEnterpriseAppGroups')
+            ->with($this->containerApplicationId)
+            ->willReturn([$this->createConfiguredMock(AzureAdGroup::class, [
+                'getDisplayName' => 'managed-group-name',
+                'getId' => 'managed-group-id',
+            ])]);
+
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('getGroupByName')
+            ->with('non-managed-group-name')
+            ->willReturn($this->createConfiguredMock(AzureAdGroup::class, [
+                'getDisplayName' => 'non-managed-group-name',
+                'getId' => 'non-managed-group-id',
+            ]));
+
+        $this->output
+            ->expects($this->once())
+            ->method('debug')
+            ->with('non-managed-group-name', 'A non-managed group with this name already exists in Azure AD with ID "non-managed-group-id", skipping...');
+
+        $this->runRunner([['name' => 'non-managed-group-name', 'description' => 'non-managed-group-description']]);
+    }
+
+    /**
+     * @covers ::__construct
+     * @covers ::run
+     */
+    public function testSupportsRunningWithMultipleTeams() : void {
+        $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description');
+        $managedGroup2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description');
+
+        $group1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description');
+        $group2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description');
+        $group3 = new AzureAdGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description');
+
+        $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description');
+
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('getEnterpriseAppGroups')
+            ->with($this->containerApplicationId)
+            ->willReturn([
+                $managedGroup1,
+                $managedGroup2,
+            ]);
+
+        $this->azureApiClient
+            ->expects($this->exactly(4))
+            ->method('getGroupByName')
+            ->withConsecutive(
+                ['managed-team-1-name'],
+                ['managed-team-2-name'],
+                ['non-managed-team-name'],
+                ['new-team-name']
+            )
+            ->willReturnOnConsecutiveCalls(
+                $group1,
+                $group2,
+                $group3,
+                null // group not found
+            );
+
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('setGroupDescription')
+            ->with('managed-team-2-id', 'managed-team-2-new-description');
+
+        $this->azureApiClient
+            ->expects($this->once())
+            ->method('createGroup')
+            ->with('new-team-name', 'new-team-description', [$this->userObjectId], [$this->userObjectId])
+            ->willReturn($newGroup);
+
+        $this->azureApiClient
+            ->expects($this->exactly(4))
+            ->method('addGroupToEnterpriseApp')
+            ->withConsecutive([
+                $group1,
+                $this->googleSuiteProvisioningApplicationId,
+                $this->googleSuiteProvisioningApplicationRoleId,
+            ], [
+                $group2,
+                $this->googleSuiteProvisioningApplicationId,
+                $this->googleSuiteProvisioningApplicationRoleId,
+            ], [
+                $newGroup,
+                $this->containerApplicationId,
+                $this->containerApplicationRoleId,
+            ], [
+                $newGroup,
+                $this->googleSuiteProvisioningApplicationId,
+                $this->googleSuiteProvisioningApplicationRoleId,
+            ]);
+
+        $githubTeam1 = new GitHubTeam(123, 'managed-team-1-name');
+        $newGitHubTeam1 = new GitHubTeam(456, 'managed-team-2-name');
+        $newGitHubTeam2 = new GitHubTeam(789, 'new-team-name');
+
+        $this->githubApiClient
+            ->expects($this->exactly(3))
+            ->method('getTeam')
+            ->withConsecutive(
+                ['managed-team-1-name'],
+                ['managed-team-2-name'],
+                ['new-team-name']
+            )
+            ->willReturnOnConsecutiveCalls(
+                $githubTeam1,
+                null, // team not found
+                null  // team not found
+            );
+
+        $this->githubApiClient
+            ->expects($this->exactly(2))
+            ->method('createTeam')
+            ->withConsecutive(
+                ['managed-team-2-name', 'managed-team-2-new-description'],
+                ['new-team-name', 'new-team-description']
+            )
+            ->willReturnOnConsecutiveCalls(
+                $newGitHubTeam1,
+                $newGitHubTeam2
+            );
+
+        $this->githubApiClient
+            ->expects($this->exactly(2))
+            ->method('syncTeamAndGroup')
+            ->withConsecutive(
+                [$newGitHubTeam1, $managedGroup2],
+                [$newGitHubTeam2, $newGroup]
+            );
+
+        $this->naisDeploymentApiClient
+            ->expects($this->exactly(3))
+            ->method('provisionTeamKey')
+            ->withConsecutive(
+                ['managed-team-1-name'],
+                ['managed-team-2-name'],
+                ['new-team-name']
+            );
+
+        $result = $this->runRunner([
+            [
+                'name'        => 'managed-team-1-name',
+                'description' => 'managed-team-1-description',
+            ],
+            [
+                'name'        => 'managed-team-2-name',
+                'description' => 'managed-team-2-new-description',
+            ],
+            [
+                'name'        => 'non-managed-team-name',
+                'description' => 'non-managed-team-description',
+            ],
+            [
+                'name'        => 'new-team-name',
+                'description' => 'new-team-description',
+            ],
+        ]);
+
+        $this->assertSame([
+            [
+                'teamName' => 'managed-team-1-name',
+                'groupId'  => 'managed-team-1-id',
+            ],
+            [
+                'teamName' => 'managed-team-2-name',
+                'groupId'  => 'managed-team-2-id',
+            ],
+            [
+                'teamName' => 'new-team-name',
+                'groupId'  => 'new-team-id',
+            ],
+        ], json_decode(json_encode($result), true));
+    }
+
+    /**
      * Execute the runner
      *
      * @param array $teams
-     * @return array
+     * @return Result
      */
-    private function runRunner(array $teams) : array {
+    private function runRunner(array $teams) : Result {
         return $this->runner->run(
             $teams,
             $this->userObjectId,
@@ -322,14 +281,5 @@ class RunnerTest extends TestCase {
             $this->containerApplicationId,
             $this->containerApplicationRoleId
         );
-    }
-
-    /**
-     * Get a Guzzle client exception
-     *
-     * @param string $message The error message
-     */
-    private function getClientException(string $message) : ClientException {
-        return new ClientException($message, $this->createMock(RequestInterface::class));
     }
 }
