@@ -181,7 +181,7 @@ class AzureApiClient {
         return array_map(function(array $group) {
             return $this->getGroupById($group['principalId']);
         }, array_filter($groups, function(array $group) : bool {
-            return 'Group' === $group['principalType'];
+            return 'group' === strtolower($group['principalType']);
         }));
     }
 }
