@@ -102,7 +102,7 @@ class AzureApiClient {
         $response = $this->httpClient->post('groups', [
             'json' => array_filter([
                 'displayName'        => $groupName,
-                'description'        => sprintf('%s (Team group created by https://github.com/navikt/teams)', $description),
+                'description'        => $description,
                 'securityEnabled'    => true,
                 'mailEnabled'        => true,
                 'mailNickname'       => $groupName,
