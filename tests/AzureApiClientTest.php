@@ -50,7 +50,7 @@ class AzureApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description"}')],
+            [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mail": "mail@nav.no"}')],
             $clientHistory
         );
 
@@ -84,7 +84,7 @@ class AzureApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description"}]}')],
+            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mail": "mail@nav.no"}]}')],
             $clientHistory
         );
 
@@ -136,7 +136,7 @@ class AzureApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description"}')],
+            [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mail": "mail@nav.no"}')],
             $clientHistory
         );
 
@@ -222,14 +222,16 @@ class AzureApiClientTest extends TestCase {
                     'value' => [['principalId' => 'third-id', 'principalType' => 'User']],
                 ])),
                 new Response(200, [], json_encode([
-                    'id' => 'first-id',
+                    'id'          => 'first-id',
                     'displayName' => 'first-group',
                     'description' => 'first description',
+                    'mail'        => 'first@nav.no',
                 ])),
                 new Response(200, [], json_encode([
-                    'id' => 'second-id',
+                    'id'          => 'second-id',
                     'displayName' => 'second-group',
                     'description' => 'second description',
+                    'mail'        => 'second@nav.no',
                 ])),
             ],
             $clientHistory
