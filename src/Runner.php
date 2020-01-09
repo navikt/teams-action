@@ -64,7 +64,7 @@ class Runner {
                 throw new InvalidArgumentException(sprintf('Missing team name: %s', Yaml::dump($team)));
             } else if (empty($team['description'])) {
                 throw new InvalidArgumentException(sprintf('Missing team description: %s', Yaml::dump($team)));
-            } else if (0 === preg_match('/^[a-z][a-z0-9-]{3,29}(?<!-)$/', $team['name'])) {
+            } else if (0 === preg_match('/^[a-z][a-z0-9-]{2,29}(?<!-)$/', $team['name'])) {
                 throw new InvalidArgumentException(sprintf('Invalid team name: %s', $team['name']));
             }
         }

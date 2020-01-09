@@ -147,4 +147,33 @@ GQL;
 
         return true;
     }
+
+    /**
+     * Set team description
+     *
+     * @param string $slug The name slug
+     * @param string $description The description
+     * @return bool Returns true on success or false otherwise
+     */
+    public function setTeamDescription(string $slug, string $description) : bool {
+        try {
+            $response = $this->httpClient->get(sprintf('orgs/navikt/teams/%s', $slug));
+        } catch (ClientException $e) {
+            return false;
+        }
+
+        $teamId = json_decode($response->getBody()->getContents(), true)['id'];
+
+        try {
+            $this->httpClient->patch(sprintf('teams/%d', $teamId), [
+                'json' => [
+                    'description' => $description,
+                ],
+            ]);
+        } catch (ClientException $e) {
+            return false;
+        }
+
+        return true;
+    }
 }
