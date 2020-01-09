@@ -13,7 +13,8 @@ class AzureAdGroupTest extends TestCase {
             'all elements present' => [
                 'some-id',
                 'some name',
-                'some description'
+                'some description',
+                'mail@nav.no'
             ],
         ];
     }
@@ -23,14 +24,21 @@ class AzureAdGroupTest extends TestCase {
      * @covers ::getId
      * @covers ::getDisplayName
      * @covers ::getDescription
+     * @covers ::getMail
      * @covers ::__construct
      * @dataProvider getCreationData
      */
-    public function testCanCreateFromArray(string $id, string $displayName, string $description) : void {
-        $team = AzureAdGroup::fromArray(['id' => $id, 'displayName' => $displayName, 'description' => $description]);
+    public function testCanCreateFromArray(string $id, string $displayName, string $description, string $mail) : void {
+        $team = AzureAdGroup::fromArray([
+            'id'          => $id,
+            'displayName' => $displayName,
+            'description' => $description,
+            'mail'        => $mail,
+        ]);
         $this->assertSame($id, $team->getId());
         $this->assertSame($displayName, $team->getDisplayName());
         $this->assertSame($description, $team->getDescription());
+        $this->assertSame($mail, $team->getMail());
     }
 
     public function getInvalidData() : array {

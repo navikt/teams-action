@@ -20,16 +20,23 @@ class AzureAdGroup {
     private $description;
 
     /**
+     * @var string
+     */
+    private $mail;
+
+    /**
      * Class constructor
      *
      * @param string $id The ID of the group
      * @param string $displayName The display name of the group
      * @param string $description The description of the group
+     * @param string $mail The mail address for the group
      */
-    public function __construct(string $id, string $displayName, string $description) {
-        $this->id = $id;
+    public function __construct(string $id, string $displayName, string $description, string $mail) {
+        $this->id          = $id;
         $this->displayName = $displayName;
         $this->description = $description;
+        $this->mail        = $mail;
     }
 
     /**
@@ -60,6 +67,15 @@ class AzureAdGroup {
     }
 
     /**
+     * Get the mail
+     *
+     * @return string
+     */
+    public function getMail() : string {
+        return $this->mail;
+    }
+
+    /**
      * Create an instance from an array
      *
      * @param array $data
@@ -67,7 +83,7 @@ class AzureAdGroup {
      * @return self
      */
     public static function fromArray(array $data) : self {
-        foreach (['id', 'displayName', 'description'] as $required) {
+        foreach (['id', 'displayName', 'description', 'mail'] as $required) {
             if (empty($data[$required])) {
                 throw new InvalidArgumentException(sprintf('Missing data element: %s', $required));
             }
@@ -76,7 +92,8 @@ class AzureAdGroup {
         return new self(
             $data['id'],
             $data['displayName'],
-            $data['description']
+            $data['description'],
+            $data['mail']
         );
     }
 }
