@@ -329,4 +329,45 @@ class GitHubApiClientTest extends TestCase {
 
         $this->assertSame('team description', $body['description'], 'Team description not correct');
     }
+
+    /**
+     * @covers ::setTeamDescription
+     */
+    public function testSetTeamDescriptionFailsWhenTeamDoesNotExist() : void {
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(404),
+            ],
+            $clientHistory
+        );
+
+        $this->assertFalse(
+            (new GitHubApiClient('access-token', $httpClient))->setTeamDescription('team-name', 'team description'),
+            'Expected method to fail'
+        );
+
+        $this->assertCount(1, $clientHistory, 'Expected one request');
+    }
+
+    /**
+     * @covers ::setTeamDescription
+     */
+    public function testSetTeamDescriptionFailsWhenPatchFails() : void {
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], '{"id": 123}'),
+                new Response(403),
+            ],
+            $clientHistory
+        );
+
+        $this->assertFalse(
+            (new GitHubApiClient('access-token', $httpClient))->setTeamDescription('team-name', 'team description'),
+            'Expected method to fail'
+        );
+
+        $this->assertCount(2, $clientHistory, 'Expected two requests');
+    }
 }
