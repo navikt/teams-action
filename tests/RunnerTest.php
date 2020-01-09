@@ -118,14 +118,14 @@ class RunnerTest extends TestCase {
      * @covers ::run
      */
     public function testSupportsRunningWithMultipleTeams() : void {
-        $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description');
-        $managedGroup2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description');
+        $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1@nav.no');
+        $managedGroup2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2@nav.no');
 
-        $group1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description');
-        $group2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description');
-        $group3 = new AzureAdGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description');
+        $group1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail@nav.no');
+        $group2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2@nav.no');
+        $group3 = new AzureAdGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description', 'somemail@nav.no');
 
-        $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description');
+        $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description', 'new@nav.no');
 
         $this->azureApiClient
             ->expects($this->once())
