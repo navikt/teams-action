@@ -296,4 +296,37 @@ class GitHubApiClientTest extends TestCase {
 
         $this->assertNull((new GitHubApiClient('access-token', $httpClient))->getSamlId('user5'));
     }
+
+    /**
+     * @covers ::setTeamDescription
+     */
+    public function testCanSetTeamDescription() : void {
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], '{"id": 123}'),
+                new Response(200, [], '{"id": 123}'),
+            ],
+            $clientHistory
+        );
+
+        $this->assertTrue(
+            (new GitHubApiClient('access-token', $httpClient))->setTeamDescription('team-name', 'team description'),
+            'Expected method to succeed'
+        );
+
+        $this->assertCount(2, $clientHistory, 'Expected two requests');
+
+        $get = $clientHistory[0]['request'];
+        $this->assertSame('GET', $get->getMethod());
+        $this->assertSame('orgs/navikt/teams/team-name', (string) $get->getUri());
+
+        $patch = $clientHistory[1]['request'];
+        $this->assertSame('PATCH', $patch->getMethod());
+        $this->assertSame('teams/123', (string) $patch->getUri());
+
+        $body = json_decode($patch->getBody()->getContents(), true);
+
+        $this->assertSame('team description', $body['description'], 'Team description not correct');
+    }
 }
