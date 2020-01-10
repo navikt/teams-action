@@ -4,6 +4,9 @@ namespace NAV\Teams;
 use NAV\Teams\Models\AzureAdGroup;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
+use NAV\Teams\Exceptions\InvalidArgumentException;
+use NAV\Teams\Models\AzureAdGroupMember;
+use NAV\Teams\Models\AzureAdGroupOwner;
 
 class AzureApiClient {
     /**
@@ -162,26 +165,75 @@ class AzureApiClient {
      * @return AzureAdGroup[]
      */
     public function getEnterpriseAppGroups(string $applicationObjectId) : array {
-        $groups = [];
+        $url = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
         $query = [
             '$select' => join(',', ['principalId', 'principalType']),
             '$top'    => 100
         ];
-        $nextLink = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
 
-        while ($nextLink) {
-            $response = $this->httpClient->get($nextLink, ['query' => $query]);
-            $body = json_decode($response->getBody()->getContents(), true);
-            $groups = array_merge($groups, $body['value']);
-            $nextLink = $body['@odata.nextLink'] ?? null;
-            $query = []; // We only need the query for the first request as the nextLink will
-                         // inherit query params from the first request
-        }
-
-        return array_map(function(array $group) {
+        return array_map(function(array $group) : AzureAdGroup {
             return $this->getGroupById($group['principalId']);
-        }, array_filter($groups, function(array $group) : bool {
+        }, array_filter($this->getPaginatedData($url, $query), function(array $group) : bool {
             return 'group' === strtolower($group['principalType']);
         }));
+    }
+
+    /**
+     * Get all members in a group
+     *
+     * @param AzureAdGroup $group The group
+     * @return AzureAdGroupMember[] Returns an array of users
+     */
+    public function getGroupMembers(AzureAdGroup $group) : array {
+        return array_filter(array_map(function(array $member) : ?AzureAdGroupMember {
+            try {
+                return AzureAdGroupMember::fromArray($member);
+            } catch (InvalidArgumentException $e) {
+                return null;
+            }
+        }, $this->getPaginatedData(sprintf('groups/%s/members', $group->getId()), [
+            '$select' => join(',', ['id', 'displayName', 'mail']),
+            '$top' => 100
+        ])));
+    }
+
+    /**
+     * Get all owners of a group
+     *
+     * @param AzureAdGroup $group The group
+     * @return AzureAdGroupOwner[] Returns an array of users
+     */
+    public function getGroupOwners(AzureAdGroup $group) : array {
+        return array_filter(array_map(function(array $member) : ?AzureAdGroupOwner {
+            try {
+                return AzureAdGroupOwner::fromArray($member);
+            } catch (InvalidArgumentException $e) {
+                return null;
+            }
+        }, $this->getPaginatedData(sprintf('groups/%s/owners', $group->getId()), [
+            '$select' => join(',', ['id', 'displayName', 'mail']),
+            '$top' => 100
+        ])));
+    }
+
+    /**
+     * Get paginated data from the API
+     *
+     * @param string $url The URL to fetch
+     * @param array $query Query parameters
+     * @return array
+     */
+    private function getPaginatedData(string $url, array $query = []) : array {
+        $entries = [];
+
+        while ($url) {
+            $response = $this->httpClient->get($url, ['query' => $query]);
+            $body = json_decode($response->getBody()->getContents(), true);
+            $entries = array_merge($entries, $body['value']);
+            $url = $body['@odata.nextLink'] ?? null;
+            $query = []; // Only need this for the first request
+        }
+
+        return $entries;
     }
 }
