@@ -171,11 +171,11 @@ class AzureApiClient {
             '$top'    => 100
         ];
 
-        return array_map(function(array $group) : AzureAdGroup {
+        return array_filter(array_map(function(array $group) : ?AzureAdGroup {
             return $this->getGroupById($group['principalId']);
         }, array_filter($this->getPaginatedData($url, $query), function(array $group) : bool {
             return 'group' === strtolower($group['principalType']);
-        }));
+        })));
     }
 
     /**
