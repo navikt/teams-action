@@ -199,6 +199,7 @@ class AzureApiClientTest extends TestCase {
 
     /**
      * @covers ::getEnterpriseAppGroups
+     * @covers ::getPaginatedData
      */
     public function testCanGetEnterpriseAppGroups() : void {
         $authClient = $this->getMockClient(
@@ -276,5 +277,77 @@ class AzureApiClientTest extends TestCase {
         $this->assertFalse((new AzureApiClient('id', 'secret', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
         $this->assertCount(1, $clientHistory);
         $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
+    }
+
+    /**
+     * @covers ::getGroupMembers
+     * @covers ::getPaginatedData
+     */
+    public function testCanGetGroupMembers() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    '@odata.nextLink' => 'next-link',
+                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no']],
+                ])),
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    'value' => [
+                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no'],
+                        ['id' => 'third-id', 'displayName' => 'Name 3'], // incomplete, will trigger error internally
+                    ],
+                ])),
+            ],
+            $clientHistory
+        );
+
+        $members = (new AzureApiClient('id', 'secret', $authClient, $httpClient))->getGroupMembers($this->createConfiguredMock(AzureAdGroup::class, [
+            'getId' => 'group-id'
+        ]));
+        $this->assertCount(2, $members);
+        $this->assertCount(2, $clientHistory);
+        $this->assertSame('groups/group-id/members?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
+    }
+
+    /**
+     * @covers ::getGroupOwners
+     * @covers ::getPaginatedData
+     */
+    public function testCanGetGroupOwners() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    '@odata.nextLink' => 'next-link',
+                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no']],
+                ])),
+                new Response(200, [], json_encode([
+                    '@odata.context' => 'context-url',
+                    'value' => [
+                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no'],
+                        ['id' => 'third-id', 'displayName' => 'Name 3'], // incomplete, will trigger error internally
+                    ],
+                ])),
+            ],
+            $clientHistory
+        );
+
+        $owners = (new AzureApiClient('id', 'secret', $authClient, $httpClient))->getGroupOwners($this->createConfiguredMock(AzureAdGroup::class, [
+            'getId' => 'group-id'
+        ]));
+        $this->assertCount(2, $owners);
+        $this->assertCount(2, $clientHistory);
+        $this->assertSame('groups/group-id/owners?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
 }
