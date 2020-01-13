@@ -166,14 +166,10 @@ class AzureApiClient {
      */
     public function getEnterpriseAppGroups(string $applicationObjectId) : array {
         $url = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
-        $query = [
-            '$select' => join(',', ['principalId', 'principalType']),
-            '$top'    => 100
-        ];
 
         return array_filter(array_map(function(array $group) : ?AzureAdGroup {
             return $this->getGroupById($group['principalId']);
-        }, array_filter($this->getPaginatedData($url, $query), function(array $group) : bool {
+        }, array_filter($this->getPaginatedData($url, ['principalId', 'principalType']), function(array $group) : bool {
             return 'group' === strtolower($group['principalType']);
         })));
     }
@@ -191,10 +187,7 @@ class AzureApiClient {
             } catch (InvalidArgumentException $e) {
                 return null;
             }
-        }, $this->getPaginatedData(sprintf('groups/%s/members', $group->getId()), [
-            '$select' => join(',', ['id', 'displayName', 'mail']),
-            '$top' => 100
-        ])));
+        }, $this->getPaginatedData(sprintf('groups/%s/members', $group->getId()), ['id', 'displayName', 'mail'])));
     }
 
     /**
@@ -210,21 +203,23 @@ class AzureApiClient {
             } catch (InvalidArgumentException $e) {
                 return null;
             }
-        }, $this->getPaginatedData(sprintf('groups/%s/owners', $group->getId()), [
-            '$select' => join(',', ['id', 'displayName', 'mail']),
-            '$top' => 100
-        ])));
+        }, $this->getPaginatedData(sprintf('groups/%s/owners', $group->getId()), ['id', 'displayName', 'mail'])));
     }
 
     /**
      * Get paginated data from the API
      *
      * @param string $url The URL to fetch
-     * @param array $query Query parameters
+     * @param array $fields Fields to fetch
      * @return array
      */
-    private function getPaginatedData(string $url, array $query = []) : array {
+    private function getPaginatedData(string $url, array $fields = []) : array {
         $entries = [];
+
+        $query = array_filter([
+            '$select' => join(',', $fields),
+            '$top'    => 100
+        ]);
 
         while ($url) {
             $response = $this->httpClient->get($url, ['query' => $query]);
