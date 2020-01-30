@@ -75,8 +75,6 @@ class Runner {
      *
      * @param array $teams List of teams
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
-     * @param string $googleSuiteProvisioningApplicationId
-     * @param string $googleSuiteProvisioningApplicationRoleId
      * @param string $containerApplicationId
      * @param string $containerApplicationRoleId
      * @throws InvalidArgumentException Throws an exception if the teams array is invalid
@@ -85,8 +83,6 @@ class Runner {
     public function run(
         array $teams,
         string $userObjectId,
-        string $googleSuiteProvisioningApplicationId,
-        string $googleSuiteProvisioningApplicationRoleId,
         string $containerApplicationId,
         string $containerApplicationRoleId
     ) : Result {
@@ -159,13 +155,6 @@ class Runner {
 
             $resultEntry->setGroupId($aadGroup->getId());
             $result->addEntry($resultEntry);
-
-            try {
-                $this->azureApiClient->addGroupToEnterpriseApp($aadGroup, $googleSuiteProvisioningApplicationId, $googleSuiteProvisioningApplicationRoleId);
-                $this->output->debug($teamName, 'Group has been added to the Google Suite Provisioning enterprise application in Azure AD');
-            } catch (ClientException $e) {
-                $this->output->debug($teamName, 'Group is already a member of the Google Suite Provisioning enterprise application');
-            }
 
             $githubTeam = $this->githubApiClient->getTeam($teamName);
 
