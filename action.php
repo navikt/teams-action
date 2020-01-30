@@ -39,8 +39,6 @@ function debug(string $message) : void {
 $requiredEnvVars = [
     'AZURE_AD_APP_ID',
     'AZURE_AD_APP_SECRET',
-    'AZURE_AD_GOOGLE_PROVISIONING_APP_ID',
-    'AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID',
     'AZURE_AD_CONTAINER_APP_ID',
     'AZURE_AD_CONTAINER_APP_ROLE_ID',
     'GITHUB_ACTOR',
@@ -101,8 +99,6 @@ try {
     $result = $runner->run(
         $teams,
         $committerSamlId,
-        getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ID'),
-        getenv('AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID'),
         getenv('AZURE_AD_CONTAINER_APP_ID'),
         getenv('AZURE_AD_CONTAINER_APP_ROLE_ID')
     );

@@ -7,9 +7,7 @@ use NAV\Teams\Models\AzureAdGroup;
 use NAV\Teams\Models\GitHubTeam;
 use NAV\Teams\Runner\Output;
 use NAV\Teams\Runner\Result;
-use GuzzleHttp\Exception\ClientException;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
 
 /**
  * @coversDefaultClass NAV\Teams\Runner
@@ -19,8 +17,6 @@ class RunnerTest extends TestCase {
     private $githubApiClient;
     private $naisDeploymentApiClient;
     private $userObjectId = 'user-object-id';
-    private $googleSuiteProvisioningApplicationId = 'google-suite-application-id';
-    private $googleSuiteProvisioningApplicationRoleId = 'google-suite-application-role-id';
     private $containerApplicationId = 'container-application-id';
     private $containerApplicationRoleId = 'conatiner-application-role-id';
     private $output;
@@ -164,25 +160,13 @@ class RunnerTest extends TestCase {
             ->willReturn($newGroup);
 
         $this->azureApiClient
-            ->expects($this->exactly(4))
+            ->expects($this->once())
             ->method('addGroupToEnterpriseApp')
-            ->withConsecutive([
-                $group1,
-                $this->googleSuiteProvisioningApplicationId,
-                $this->googleSuiteProvisioningApplicationRoleId,
-            ], [
-                $group2,
-                $this->googleSuiteProvisioningApplicationId,
-                $this->googleSuiteProvisioningApplicationRoleId,
-            ], [
+            ->with(
                 $newGroup,
                 $this->containerApplicationId,
-                $this->containerApplicationRoleId,
-            ], [
-                $newGroup,
-                $this->googleSuiteProvisioningApplicationId,
-                $this->googleSuiteProvisioningApplicationRoleId,
-            ]);
+                $this->containerApplicationRoleId
+            );
 
         $githubTeam1 = new GitHubTeam(123, 'managed-team-1-name');
         $newGitHubTeam1 = new GitHubTeam(456, 'managed-team-2-name');
@@ -276,8 +260,6 @@ class RunnerTest extends TestCase {
         return $this->runner->run(
             $teams,
             $this->userObjectId,
-            $this->googleSuiteProvisioningApplicationId,
-            $this->googleSuiteProvisioningApplicationRoleId,
             $this->containerApplicationId,
             $this->containerApplicationRoleId
         );

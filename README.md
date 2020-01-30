@@ -9,7 +9,6 @@ When the action is triggered it will open the teams YAML file pointed to by the 
 - If the team already exists as a group in Azure AD, skip to the next team
 - If the team already exists as a team on GitHub, skip to the next one
 - Create a mail and security enabled group in Azure AD for the team
-- Add the newly created Azure AD group to the Google Suite Provisioning application so it's synced to Google
 - Create a GitHub team for the team
 
 ## Required environment variables
@@ -26,14 +25,6 @@ The Azure AD application ID (client ID) of the application used to access the Mi
 ### `AZURE_AD_APP_SECRET`
 
 The Azure AD application secret of the application used to access the Microsoft Graph API.
-
-### `AZURE_AD_GOOGLE_PROVISIONING_APP_ID`
-
-Each group that is created by this action will be added to this enterprise application. This is the object ID of the application. This application handles syncing of groups to Google.
-
-### `AZURE_AD_GOOGLE_PROVISIONING_APP_ROLE_ID`
-
-When adding groups to the enterprise application they will receive this role.
 
 ### `AZURE_AD_CONTAINER_APP_ID`
 
