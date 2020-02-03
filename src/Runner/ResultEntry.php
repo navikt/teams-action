@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams\Runner;
+namespace NAVIT\Teams\Runner;
 
 use JsonSerializable;
 

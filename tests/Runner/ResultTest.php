@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams\Runner;
+namespace NAVIT\Teams\Runner;
 
 use PHPUnit\Framework\TestCase;
 
 /**
- * @coversDefaultClass NAV\Teams\Runner\Result
+ * @coversDefaultClass NAVIT\Teams\Runner\Result
  */
 class ResultTest extends TestCase {
     public function getEntries() : array {

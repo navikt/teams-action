@@ -1,11 +1,13 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams;
+namespace NAVIT\Teams;
 
-use NAV\Teams\Exceptions\InvalidArgumentException;
-use NAV\Teams\Exceptions\RuntimeException;
+use NAVIT\AzureAd\ApiClient as AzureApiClient;
+use NAVIT\GitHub\ApiClient as GitHubApiClient;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use GuzzleHttp\Exception\ClientException;
+use InvalidArgumentException;
+use RuntimeException;
 
 require __DIR__ . '/vendor/autoload.php';
 

@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams\Runner;
+namespace NAVIT\Teams\Runner;
 
 use PHPUnit\Framework\TestCase;
 
 /**
- * @coversDefaultClass NAV\Teams\Runner\ResultEntry
+ * @coversDefaultClass NAVIT\Teams\Runner\ResultEntry
  */
 class ResultEntryTest extends TestCase {
     /**
