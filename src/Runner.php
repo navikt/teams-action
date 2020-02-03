@@ -1,20 +1,22 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams;
+namespace NAVIT\Teams;
 
-use NAV\Teams\Runner\Output;
-use NAV\Teams\Runner\Result;
-use NAV\Teams\Runner\ResultEntry;
-use NAV\Teams\Exceptions\InvalidArgumentException;
-use NAV\Teams\Exceptions\RuntimeException;
-use NAV\Teams\Models\AzureAdGroup;
+use NAVIT\Teams\Runner\Output;
+use NAVIT\Teams\Runner\Result;
+use NAVIT\Teams\Runner\ResultEntry;
+use NAVIT\AzureAd\ApiClient as AzureAdApiClient;
+use NAVIT\GitHub\ApiClient as GitHubApiClient;
+use NAVIT\AzureAd\Models\Group as AzureAdGroup;
 use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\Yaml\Yaml;
+use InvalidArgumentException;
+use RuntimeException;
 
 class Runner {
     /**
-     * @var AzureApiClient
+     * @var AzureAdApiClient
      */
-    private $azureApiClient;
+    private $azureAdApiClient;
 
     /**
      * @var GitHubApiClient
@@ -34,18 +36,18 @@ class Runner {
     /**
      * Class constructor
      *
-     * @param AzureApiClient $azureApiClient
+     * @param AzureAdApiClient $azureAdApiClient
      * @param GitHubApiClient $githubApiClient
      * @param NaisDeploymentApiClient $naisDeploymentApiClient
      * @param Output $output
      */
     public function __construct(
-        AzureApiClient $azureApiClient,
+        AzureAdApiClient $azureAdApiClient,
         GitHubApiClient $githubApiClient,
         NaisDeploymentApiClient $naisDeploymentApiClient,
         Output $output = null
     ) {
-        $this->azureApiClient          = $azureApiClient;
+        $this->azureAdApiClient        = $azureAdApiClient;
         $this->githubApiClient         = $githubApiClient;
         $this->naisDeploymentApiClient = $naisDeploymentApiClient;
         $this->output                  = $output ?: new Output();
@@ -88,7 +90,7 @@ class Runner {
     ) : Result {
         $this->validateTeams($teams);
 
-        $managedTeams = $this->azureApiClient->getEnterpriseAppGroups($containerApplicationId);
+        $managedTeams = $this->azureAdApiClient->getEnterpriseAppGroups($containerApplicationId);
 
         if (empty($managedTeams)) {
             throw new RuntimeException('Unable to fetch managed teams, aborting...');
@@ -107,7 +109,7 @@ class Runner {
             $teamDescription = $team['description'];
             $resultEntry     = new ResultEntry($teamName);
 
-            $aadGroup = $this->azureApiClient->getGroupByName($teamName);
+            $aadGroup = $this->azureAdApiClient->getGroupByDisplayName($teamName);
 
             if (null !== $aadGroup) {
                 if (!$isManaged($aadGroup)) {
@@ -125,13 +127,13 @@ class Runner {
 
                 if ($aadGroup->getDescription() !== $teamDescription) {
                     $this->output->debug($teamName, 'Group description in Azure AD is out of sync, updating...');
-                    $this->azureApiClient->setGroupDescription($aadGroup->getId(), $teamDescription);
+                    $this->azureAdApiClient->setGroupDescription($aadGroup->getId(), $teamDescription);
                 }
             } else {
                 $this->output->debug($teamName, 'Group does not exist in Azure AD, creating...');
 
                 try {
-                    $aadGroup = $this->azureApiClient->createGroup($teamName, $teamDescription, [$userObjectId], [$userObjectId]);
+                    $aadGroup = $this->azureAdApiClient->createGroup($teamName, $teamDescription, [$userObjectId], [$userObjectId]);
                 } catch (ClientException $e) {
                     $this->output->failure($teamName, sprintf(
                         'Unable to create Azure AD group, error message: %s',
@@ -146,7 +148,7 @@ class Runner {
                 ));
 
                 try {
-                    $this->azureApiClient->addGroupToEnterpriseApp($aadGroup, $containerApplicationId, $containerApplicationRoleId);
+                    $this->azureAdApiClient->addGroupToEnterpriseApp($aadGroup->getId(), $containerApplicationId, $containerApplicationRoleId);
                 } catch (ClientException $e) {
                     $this->output->failure($teamName, 'Unable to mark the Azure AD group as "managed", continuing to the next team...');
                     continue;
@@ -177,7 +179,7 @@ class Runner {
                     $this->output->debug($teamName, 'Enable sync between Azure AD group and GitHub team...');
 
                     try {
-                        $this->githubApiClient->syncTeamAndGroup($githubTeam, $aadGroup);
+                        $this->githubApiClient->syncTeamAndGroup($githubTeam->getId(), $aadGroup->getId(), $aadGroup->getDisplayName(), $aadGroup->getDescription());
                     } catch (ClientException $e) {
                         $this->output->failure($teamName, sprintf(
                             'Unable to sync Azure AD group and GitHub team, error message: %s',

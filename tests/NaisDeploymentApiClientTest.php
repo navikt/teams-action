@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams;
+namespace NAVIT\Teams;
 
 use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Client as HttpClient;

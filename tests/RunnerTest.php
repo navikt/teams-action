@@ -1,19 +1,21 @@
 <?php declare(strict_types=1);
-namespace NAV\Teams;
+namespace NAVIT\Teams;
 
-use NAV\Teams\Exceptions\InvalidArgumentException;
-use NAV\Teams\Exceptions\RuntimeException;
-use NAV\Teams\Models\AzureAdGroup;
-use NAV\Teams\Models\GitHubTeam;
-use NAV\Teams\Runner\Output;
-use NAV\Teams\Runner\Result;
+use NAVIT\AzureAd\ApiClient as AzureAdApiClient;
+use NAVIT\AzureAd\Models\Group as AzureAdGroup;
+use NAVIT\GitHub\ApiClient as GitHubApiClient;
+use NAVIT\GitHub\Models\Team as GitHubTeam;
+use NAVIT\Teams\Runner\Output;
+use NAVIT\Teams\Runner\Result;
 use PHPUnit\Framework\TestCase;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
- * @coversDefaultClass NAV\Teams\Runner
+ * @coversDefaultClass NAVIT\Teams\Runner
  */
 class RunnerTest extends TestCase {
-    private $azureApiClient;
+    private $azureAdApiClient;
     private $githubApiClient;
     private $naisDeploymentApiClient;
     private $userObjectId = 'user-object-id';
@@ -23,13 +25,13 @@ class RunnerTest extends TestCase {
     private $runner;
 
     public function setUp() : void {
-        $this->azureApiClient = $this->createMock(AzureApiClient::class);
+        $this->azureAdApiClient = $this->createMock(AzureAdApiClient::class);
         $this->githubApiClient = $this->createMock(GitHubApiClient::class);
         $this->naisDeploymentApiClient = $this->createMock(NaisDeploymentApiClient::class);
         $this->output = $this->createMock(Output::class);
 
         $this->runner = new Runner(
-            $this->azureApiClient,
+            $this->azureAdApiClient,
             $this->githubApiClient,
             $this->naisDeploymentApiClient,
             $this->output
@@ -69,7 +71,7 @@ class RunnerTest extends TestCase {
      */
     public function testThrowsExceptionWhenFailingToFetchManagedTeams() : void {
         $this->expectExceptionObject(new RuntimeException('Unable to fetch managed teams, aborting...'));
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
             ->method('getEnterpriseAppGroups')
             ->with($this->containerApplicationId)
@@ -83,7 +85,7 @@ class RunnerTest extends TestCase {
      * @covers ::validateTeams
      */
     public function testWillSkipNonManagedGroups() : void {
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
             ->method('getEnterpriseAppGroups')
             ->with($this->containerApplicationId)
@@ -92,9 +94,9 @@ class RunnerTest extends TestCase {
                 'getId' => 'managed-group-id',
             ])]);
 
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
-            ->method('getGroupByName')
+            ->method('getGroupByDisplayName')
             ->with('non-managed-group-name')
             ->willReturn($this->createConfiguredMock(AzureAdGroup::class, [
                 'getDisplayName' => 'non-managed-group-name',
@@ -123,7 +125,7 @@ class RunnerTest extends TestCase {
 
         $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description', 'new@nav.no');
 
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
             ->method('getEnterpriseAppGroups')
             ->with($this->containerApplicationId)
@@ -132,9 +134,9 @@ class RunnerTest extends TestCase {
                 $managedGroup2,
             ]);
 
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->exactly(4))
-            ->method('getGroupByName')
+            ->method('getGroupByDisplayName')
             ->withConsecutive(
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
@@ -148,22 +150,22 @@ class RunnerTest extends TestCase {
                 null // group not found
             );
 
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
             ->method('setGroupDescription')
             ->with('managed-team-2-id', 'managed-team-2-new-description');
 
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
             ->method('createGroup')
             ->with('new-team-name', 'new-team-description', [$this->userObjectId], [$this->userObjectId])
             ->willReturn($newGroup);
 
-        $this->azureApiClient
+        $this->azureAdApiClient
             ->expects($this->once())
             ->method('addGroupToEnterpriseApp')
             ->with(
-                $newGroup,
+                'new-team-id',
                 $this->containerApplicationId,
                 $this->containerApplicationRoleId
             );
@@ -202,8 +204,8 @@ class RunnerTest extends TestCase {
             ->expects($this->exactly(2))
             ->method('syncTeamAndGroup')
             ->withConsecutive(
-                [$newGitHubTeam1, $managedGroup2],
-                [$newGitHubTeam2, $newGroup]
+                [456, 'managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description'],
+                [789, 'new-team-id', 'new-team-name', 'new-team-description']
             );
 
         $this->naisDeploymentApiClient

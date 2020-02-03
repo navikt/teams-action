@@ -16,7 +16,9 @@
     },
     "require": {
         "guzzlehttp/guzzle": "^6.3",
-        "symfony/yaml": "^5.0"
+        "symfony/yaml": "^5.0",
+        "navikt/aad-api-client": "^0.2",
+        "navikt/github-api-client": "^0.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.5",
@@ -24,12 +26,12 @@
     },
     "autoload": {
         "psr-4": {
-            "NAV\\Teams\\": "src/"
+            "NAVIT\\Teams\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "NAV\\Teams\\": "tests/"
+            "NAVIT\\Teams\\": "tests/"
         }
     },
     "scripts": {
