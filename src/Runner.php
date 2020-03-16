@@ -97,8 +97,10 @@ class Runner {
         }
 
         $isManaged = function(AzureAdGroup $group) use ($managedTeams) {
-            return 0 !== count(array_filter($managedTeams, function(AzureAdGroup $managedTeam) use ($group) {
-                return $group->getDisplayName() === $managedTeam->getDisplayName();
+            $mailNickname = strtolower($group->getMailNickname());
+
+            return 0 !== count(array_filter($managedTeams, function(AzureAdGroup $managedTeam) use ($mailNickname) {
+                return $mailNickname === strtolower($managedTeam->getMailNickname());
             }));
         };
 
@@ -109,7 +111,7 @@ class Runner {
             $teamDescription = $team['description'];
             $resultEntry     = new ResultEntry($teamName);
 
-            $aadGroup = $this->azureAdApiClient->getGroupByDisplayName($teamName);
+            $aadGroup = $this->azureAdApiClient->getGroupByMailNickname($teamName);
 
             if (null !== $aadGroup) {
                 if (!$isManaged($aadGroup)) {

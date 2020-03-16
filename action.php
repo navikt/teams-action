@@ -76,6 +76,7 @@ try {
 }
 
 $githubApiClient = new GitHubApiClient(
+    'navikt',
     getenv('GITHUB_PAT')
 );
 

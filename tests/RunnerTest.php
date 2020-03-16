@@ -25,9 +25,16 @@ class RunnerTest extends TestCase {
     private $runner;
 
     public function setUp() : void {
+        /** @var AzureAdApiClient */
         $this->azureAdApiClient = $this->createMock(AzureAdApiClient::class);
+
+        /** @var GitHubApiClient */
         $this->githubApiClient = $this->createMock(GitHubApiClient::class);
+
+        /** @var NaisDeploymentApiClient */
         $this->naisDeploymentApiClient = $this->createMock(NaisDeploymentApiClient::class);
+
+        /** @var Output */
         $this->output = $this->createMock(Output::class);
 
         $this->runner = new Runner(
@@ -90,16 +97,16 @@ class RunnerTest extends TestCase {
             ->method('getEnterpriseAppGroups')
             ->with($this->containerApplicationId)
             ->willReturn([$this->createConfiguredMock(AzureAdGroup::class, [
-                'getDisplayName' => 'managed-group-name',
+                'getMailNickname' => 'managed-group-name',
                 'getId' => 'managed-group-id',
             ])]);
 
         $this->azureAdApiClient
             ->expects($this->once())
-            ->method('getGroupByDisplayName')
+            ->method('getGroupByMailNickname')
             ->with('non-managed-group-name')
             ->willReturn($this->createConfiguredMock(AzureAdGroup::class, [
-                'getDisplayName' => 'non-managed-group-name',
+                'getMailNickname' => 'non-managed-group-name',
                 'getId' => 'non-managed-group-id',
             ]));
 
@@ -116,14 +123,14 @@ class RunnerTest extends TestCase {
      * @covers ::run
      */
     public function testSupportsRunningWithMultipleTeams() : void {
-        $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1@nav.no');
-        $managedGroup2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2@nav.no');
+        $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
+        $managedGroup2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2');
 
-        $group1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail@nav.no');
-        $group2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2@nav.no');
-        $group3 = new AzureAdGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description', 'somemail@nav.no');
+        $group1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
+        $group2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2');
+        $group3 = new AzureAdGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description', 'somemail');
 
-        $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description', 'new@nav.no');
+        $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description', 'new');
 
         $this->azureAdApiClient
             ->expects($this->once())
@@ -136,7 +143,7 @@ class RunnerTest extends TestCase {
 
         $this->azureAdApiClient
             ->expects($this->exactly(4))
-            ->method('getGroupByDisplayName')
+            ->method('getGroupByMailNickname')
             ->withConsecutive(
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
