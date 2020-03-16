@@ -52,6 +52,10 @@ Path to where the teams YAML file is located. Documentation regarding this file 
 
 Hex-encoded secret used to create Nais deployment key for the teams.
 
+### `COMMITTER`
+
+GitHub username of the user who committed the change. This user will be added as an owner to the created Azure AD group.
+
 ## Release a new version
 
 There is a workflow that runs when a tag starting with `v` is pushed, which publishes a docker image to [dockerhub](https://hub.docker.com/repository/docker/navikt/teams-action).
