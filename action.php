@@ -43,7 +43,7 @@ $requiredEnvVars = [
     'AZURE_AD_APP_SECRET',
     'AZURE_AD_CONTAINER_APP_ID',
     'AZURE_AD_CONTAINER_APP_ROLE_ID',
-    'GITHUB_ACTOR',
+    'COMMITTER',
     'GITHUB_PAT',
     'TEAMS_YAML_PATH',
     'NAIS_DEPLOYMENT_API_SECRET'
@@ -83,16 +83,16 @@ $naisDeploymentApiClient = new NaisDeploymentApiClient(
     getenv('NAIS_DEPLOYMENT_API_SECRET')
 );
 
-$actor = getenv('GITHUB_ACTOR');
+$committer = getenv('COMMITTER');
 
 try {
-    $committerSamlId = $githubApiClient->getSamlId($actor);
+    $committerSamlId = $githubApiClient->getSamlId($committer);
 } catch (ClientException $e) {
-    fail(sprintf('Unable to get SAML ID for actor: %s', $e->getMessage()));
+    fail(sprintf('Unable to get SAML ID for committer with username "%s": %s', $committer, $e->getMessage()));
 }
 
 if (null === $committerSamlId) {
-    fail(sprintf('Unable to find SAML ID for actor: %s', $actor));
+    fail(sprintf('Unable to find SAML ID for committer "%s"', $committer));
 }
 
 $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
