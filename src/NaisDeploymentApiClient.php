@@ -31,7 +31,7 @@ class NaisDeploymentApiClient {
     public function __construct(string $secret, HttpClient $httpClient = null) {
         if (null === $httpClient) {
             $httpClient = new HttpClient([
-                'base_uri' => 'https://deployment.prod-sbs.nais.io/api/v1/',
+                'base_uri' => 'https://deploy.nais.io/api/v1/',
             ]);
         }
 
