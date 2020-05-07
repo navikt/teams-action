@@ -177,9 +177,9 @@ class RunnerTest extends TestCase {
                 $this->containerApplicationRoleId
             );
 
-        $githubTeam1 = new GitHubTeam(123, 'managed-team-1-name');
-        $newGitHubTeam1 = new GitHubTeam(456, 'managed-team-2-name');
-        $newGitHubTeam2 = new GitHubTeam(789, 'new-team-name');
+        $githubTeam1 = new GitHubTeam(123, 'managed-team-1-name', 'managed-team-1-name');
+        $newGitHubTeam1 = new GitHubTeam(456, 'managed-team-2-name', 'managed-team-2-name');
+        $newGitHubTeam2 = new GitHubTeam(789, 'new-team-name', 'new-team-name');
 
         $this->githubApiClient
             ->expects($this->exactly(3))
@@ -211,8 +211,8 @@ class RunnerTest extends TestCase {
             ->expects($this->exactly(2))
             ->method('syncTeamAndGroup')
             ->withConsecutive(
-                [456, 'managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description'],
-                [789, 'new-team-id', 'new-team-name', 'new-team-description']
+                ['managed-team-2-name', 'managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description'],
+                ['new-team-name', 'new-team-id', 'new-team-name', 'new-team-description']
             );
 
         $this->naisDeploymentApiClient
