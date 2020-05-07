@@ -181,7 +181,7 @@ class Runner {
                     $this->output->debug($teamName, 'Enable sync between Azure AD group and GitHub team...');
 
                     try {
-                        $this->githubApiClient->syncTeamAndGroup($githubTeam->getId(), $aadGroup->getId(), $aadGroup->getDisplayName(), $aadGroup->getDescription());
+                        $this->githubApiClient->syncTeamAndGroup($githubTeam->getSlug(), $aadGroup->getId(), $aadGroup->getDisplayName(), $aadGroup->getDescription());
                     } catch (ClientException $e) {
                         $this->output->failure($teamName, sprintf(
                             'Unable to sync Azure AD group and GitHub team, error message: %s',
