@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Middleware;
 
 /**
- * @coversDefaultClass NAV\Teams\NaisDeploymentApiClient
+ * @coversDefaultClass NAVIT\Teams\NaisDeploymentApiClient
  */
 class NaisDeploymentApiClientTest extends TestCase {
     /**

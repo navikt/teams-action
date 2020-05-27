@@ -196,14 +196,26 @@ class Runner {
                 }
             }
 
-            try {
-                $this->naisDeploymentApiClient->provisionTeamKey($teamName);
-                $this->output->debug($teamName, 'NAIS deployment key has been provisioned');
-            } catch (ClientException $e) {
-                $this->output->failure($teamName, sprintf(
-                    'Unable to provision NAIS deployment key, error message: %s',
-                    $e->getMessage()
-                ));
+            for ($failures = 0; $failures < 5; $failures++) {
+                try {
+                    $this->naisDeploymentApiClient->provisionTeamKey($teamName);
+                    $this->output->debug($teamName, 'NAIS deployment key has been provisioned');
+                    break;
+                } catch (ClientException $e) {
+                    if ($failures < 4) {
+                        $wait = pow(2, $failures + 1) - 1;
+                        $this->output->debug($teamName, sprintf(
+                            'Unable to provision a NAIS deployment key at the moment, waiting %d second(s)',
+                            $wait
+                        ));
+                        sleep((int) $wait);
+                    } else {
+                        $this->output->failure($teamName, sprintf(
+                            'Unable to provision NAIS deployment key, error message: %s',
+                            $e->getMessage()
+                        ));
+                    }
+                }
             }
         }
 
