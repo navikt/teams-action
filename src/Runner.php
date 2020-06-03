@@ -56,7 +56,7 @@ class Runner {
     /**
      * Validate the teams list
      *
-     * @param array $teams List of teams
+     * @param array<int, array{name: string, description: string}> $teams List of teams
      * @throws InvalidArgumentException
      * @return void
      */
@@ -75,7 +75,7 @@ class Runner {
     /**
      * Run the action
      *
-     * @param array $teams List of teams
+     * @param array<int, array{name: string, description: string}> $teams List of teams $teams List of teams
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $containerApplicationId
      * @param string $containerApplicationRoleId

@@ -7,7 +7,7 @@ class Result implements JsonSerializable {
     /**
      * Result entries
      *
-     * @var array
+     * @var ResultEntry[]
      */
     private $entries = [];
 
@@ -24,7 +24,7 @@ class Result implements JsonSerializable {
     /**
      * Serialize as JSON
      *
-     * @return array
+     * @return ResultEntry[]
      */
     public function jsonSerialize() : array {
         return $this->entries;
