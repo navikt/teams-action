@@ -134,6 +134,7 @@ class RunnerTest extends TestCase {
     /**
      * @covers ::__construct
      * @covers ::run
+     * @covers ::provisionNaisDeploymentKey
      */
     public function testSupportsRunningWithMultipleTeams() : void {
         $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
@@ -274,6 +275,7 @@ class RunnerTest extends TestCase {
 
     /**
      * @covers ::run
+     * @covers ::provisionNaisDeploymentKey
      */
     public function testWillRetryNaisDeploymentProvisioning() : void {
         $this->azureAdApiClient
