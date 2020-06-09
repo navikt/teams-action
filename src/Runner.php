@@ -203,7 +203,7 @@ class Runner {
                     break;
                 } catch (ClientException $e) {
                     if ($failures < 4) {
-                        $wait = pow(2, $failures + 1) - 1;
+                        $wait = pow(2, $failures + 2) - 1;
                         $this->output->debug($teamName, sprintf(
                             'Unable to provision a NAIS deployment key at the moment, waiting %d second(s)',
                             $wait

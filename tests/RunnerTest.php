@@ -313,10 +313,10 @@ class RunnerTest extends TestCase {
                 ['newname', 'Team does not exist on GitHub, creating...'],
                 ['newname', 'Team has been created on GitHub, ID: 123'],
                 ['newname', 'Enable sync between Azure AD group and GitHub team...'],
-                ['newname', 'Unable to provision a NAIS deployment key at the moment, waiting 1 second(s)'],
                 ['newname', 'Unable to provision a NAIS deployment key at the moment, waiting 3 second(s)'],
                 ['newname', 'Unable to provision a NAIS deployment key at the moment, waiting 7 second(s)'],
                 ['newname', 'Unable to provision a NAIS deployment key at the moment, waiting 15 second(s)'],
+                ['newname', 'Unable to provision a NAIS deployment key at the moment, waiting 31 second(s)'],
             );
 
         $this->output
@@ -329,7 +329,7 @@ class RunnerTest extends TestCase {
             ->with('newname')
             ->willThrowException(new ClientException('some failure', $this->createMock(RequestInterface::class)));
 
-        $this->expectOutputString('sleep 1sleep 3sleep 7sleep 15');
+        $this->expectOutputString('sleep 3sleep 7sleep 15sleep 31');
 
         $this->runRunner([
             [
