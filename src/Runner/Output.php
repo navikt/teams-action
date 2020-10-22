@@ -13,7 +13,7 @@ class Output {
     /**
      * All messages
      *
-     * @var array
+     * @var array<array{type: string, team: string, message: string}>
      */
     private $messages = [];
 
