@@ -13,12 +13,7 @@ class NaisDeploymentApiClient {
      */
     const ADD_SIGNATURE_MIDDLEWARE = 'add-signature';
 
-    /**
-     * HTTP Client instance
-     *
-     * @var HttpClient
-     */
-    private $httpClient;
+    private HttpClient $httpClient;
 
     /**
      * Class constructor

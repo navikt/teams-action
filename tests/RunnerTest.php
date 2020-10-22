@@ -1,14 +1,19 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use NAVIT\AzureAd\ApiClient as AzureAdApiClient;
-use NAVIT\AzureAd\Models\Group as AzureAdGroup;
-use NAVIT\GitHub\ApiClient as GitHubApiClient;
-use NAVIT\GitHub\Models\Team as GitHubTeam;
-use NAVIT\Teams\Runner\Output;
-use NAVIT\Teams\Runner\Result;
+use NAVIT\{
+    Teams\Runner\Output,
+    Teams\Runner\Result,
+    GitHub\ApiClient as GitHubApiClient,
+    GitHub\Models\Team as GitHubTeam,
+    AzureAd\ApiClient as AzureAdApiClient,
+    AzureAd\Models\Group as AzureAdGroup,
+};
 use GuzzleHttp\Exception\ClientException;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\{
+    TestCase,
+    MockObject\MockObject,
+};
 use Psr\Http\Message\RequestInterface;
 use InvalidArgumentException;
 use RuntimeException;
@@ -28,26 +33,27 @@ function sleep(int $seconds) : int {
  * @coversDefaultClass NAVIT\Teams\Runner
  */
 class RunnerTest extends TestCase {
-    private $azureAdApiClient;
-    private $githubApiClient;
-    private $naisDeploymentApiClient;
-    private $userObjectId = 'user-object-id';
-    private $containerApplicationId = 'container-application-id';
-    private $containerApplicationRoleId = 'conatiner-application-role-id';
-    private $output;
-    private $runner;
+    /** @var AzureAdApiClient&MockObject */
+    private AzureAdApiClient $azureAdApiClient;
+
+    /** @var GitHubApiClient&MockObject */
+    private GitHubApiClient $githubApiClient;
+
+    /** @var NaisDeploymentApiClient&MockObject */
+    private NaisDeploymentApiClient $naisDeploymentApiClient;
+
+    /** @var Output&MockObject */
+    private Output $output;
+
+    private string $userObjectId = 'user-object-id';
+    private string $containerApplicationId = 'container-application-id';
+    private string $containerApplicationRoleId = 'container-application-role-id';
+    private Runner $runner;
 
     public function setUp() : void {
-        /** @var AzureAdApiClient */
         $this->azureAdApiClient = $this->createMock(AzureAdApiClient::class);
-
-        /** @var GitHubApiClient */
         $this->githubApiClient = $this->createMock(GitHubApiClient::class);
-
-        /** @var NaisDeploymentApiClient */
         $this->naisDeploymentApiClient = $this->createMock(NaisDeploymentApiClient::class);
-
-        /** @var Output */
         $this->output = $this->createMock(Output::class);
 
         $this->runner = new Runner(
@@ -58,6 +64,9 @@ class RunnerTest extends TestCase {
         );
     }
 
+    /**
+     * @return array<string,array{0:array{description?:string,name?:string},1:string}>
+     */
     public function getInvalidTeams() : array {
         return [
             'missing name' => [
@@ -79,6 +88,7 @@ class RunnerTest extends TestCase {
      * @dataProvider getInvalidTeams
      * @covers ::run
      * @covers ::validateTeams
+     * @param array{description?:string,name?:string} $team
      */
     public function testThrowsExceptionOnInvalidTeamsArray(array $team, string $expectedErrorMessage) : void {
         $this->expectExceptionObject(new InvalidArgumentException($expectedErrorMessage));
@@ -269,7 +279,7 @@ class RunnerTest extends TestCase {
                 'teamName' => 'new-team-name',
                 'groupId'  => 'new-team-id',
             ],
-        ], json_decode(json_encode($result), true));
+        ], json_decode((string) json_encode($result), true));
     }
 
     /**
@@ -342,7 +352,6 @@ class RunnerTest extends TestCase {
     /**
      * Execute the runner
      *
-     * @param array $teams
      * @return Result
      */
     private function runRunner(array $teams) : Result {

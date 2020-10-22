@@ -1,37 +1,26 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use NAVIT\Teams\Runner\Output;
-use NAVIT\Teams\Runner\Result;
-use NAVIT\Teams\Runner\ResultEntry;
-use NAVIT\AzureAd\ApiClient as AzureAdApiClient;
-use NAVIT\GitHub\ApiClient as GitHubApiClient;
-use NAVIT\AzureAd\Models\Group as AzureAdGroup;
+use NAVIT\Teams\Runner\{
+    Output,
+    Result,
+    ResultEntry,
+};
+use NAVIT\{
+    AzureAd\ApiClient as AzureAdApiClient,
+    AzureAd\Models\Group as AzureAdGroup,
+    GitHub\ApiClient as GitHubApiClient,
+};
 use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\Yaml\Yaml;
 use InvalidArgumentException;
 use RuntimeException;
 
 class Runner {
-    /**
-     * @var AzureAdApiClient
-     */
-    private $azureAdApiClient;
-
-    /**
-     * @var GitHubApiClient
-     */
-    private $githubApiClient;
-
-    /**
-     * @var NaisDeploymentApiClient
-     */
-    private $naisDeploymentApiClient;
-
-    /**
-     * @var Output
-     */
-    private $output;
+    private AzureAdApiClient $azureAdApiClient;
+    private GitHubApiClient $githubApiClient;
+    private NaisDeploymentApiClient $naisDeploymentApiClient;
+    private Output $output;
 
     /**
      * Class constructor
@@ -56,7 +45,7 @@ class Runner {
     /**
      * Validate the teams list
      *
-     * @param array<array{name: string, description: string}> $teams List of teams
+     * @param array<array{name:string,description:string}> $teams List of teams
      * @throws InvalidArgumentException
      * @return void
      */
@@ -75,7 +64,7 @@ class Runner {
     /**
      * Run the action
      *
-     * @param array<array{name: string, description: string}> $teams List of teams
+     * @param array<array{name:string,description:string}> $teams List of teams
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $containerApplicationId
      * @param string $containerApplicationRoleId

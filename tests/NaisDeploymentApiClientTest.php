@@ -2,12 +2,15 @@
 namespace NAVIT\Teams;
 
 use PHPUnit\Framework\TestCase;
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Middleware;
+use GuzzleHttp\{
+    Client as HttpClient,
+    Exception\ClientException,
+    Handler\MockHandler,
+    HandlerStack,
+    Psr7\Response,
+    Psr7\Request,
+    Middleware,
+};
 
 /**
  * @coversDefaultClass NAVIT\Teams\NaisDeploymentApiClient
@@ -17,7 +20,7 @@ class NaisDeploymentApiClientTest extends TestCase {
      * Get a mock Guzzle Client with a history middleware
      *
      * @param Response[] $responses A list of responses to return
-     * @param array $history Container for the history
+     * @param array<array{response:Response,request:Request}> $history Container for the history
      * @return HttpClient
      */
     private function getMockClient(array $responses, array &$history = []) : HttpClient {

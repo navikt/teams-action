@@ -9,7 +9,7 @@ class Result implements JsonSerializable {
      *
      * @var ResultEntry[]
      */
-    private $entries = [];
+    private array $entries = [];
 
     /**
      * Add an entry

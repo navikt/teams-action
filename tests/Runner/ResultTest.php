@@ -7,6 +7,9 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass NAVIT\Teams\Runner\Result
  */
 class ResultTest extends TestCase {
+    /**
+     * @return array<string,array{0:ResultEntry[],1:string}>
+     */
     public function getEntries() : array {
         $entryWithGroupId = new ResultEntry('some-team');
         $entryWithGroupId->setGroupId('group-id');
@@ -30,6 +33,7 @@ class ResultTest extends TestCase {
      * @dataProvider getEntries
      * @covers ::addEntry
      * @covers ::jsonSerialize
+     * @param ResultEntry[] $entries
      */
     public function testCanAddEntryAndSerializeAsJson(array $entries, string $expectedJson) : void {
         $result = new Result();

@@ -3,3 +3,8 @@ parameters:
     paths:
         - action.php
         - src
+        - tests
+    ignoreErrors:
+        -
+            message: '#runRunner\(\) has parameter \$teams with no value type specified in iterable type array#'
+            path: tests/RunnerTest.php

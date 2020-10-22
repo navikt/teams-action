@@ -2,20 +2,15 @@
 namespace NAVIT\Teams\Runner;
 
 class Output {
-    /**
-     * Message class
-     *
-     * @var string
-     */
     const DEBUG   = 'DEBUG';
     const FAILURE = 'FAILURE';
 
     /**
      * All messages
      *
-     * @var array<array{type: string, team: string, message: string}>
+     * @var array<array{type:string,team:string,message:string}>
      */
-    private $messages = [];
+    private array $messages = [];
 
     /**
      * Output a debug message
