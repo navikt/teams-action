@@ -21,6 +21,7 @@ class NaisDeploymentApiClientTest extends TestCase {
      *
      * @param Response[] $responses A list of responses to return
      * @param array<array{response:Response,request:Request}> $history Container for the history
+     * @param-out array<array{response:Response,request:Request}> $history
      * @return HttpClient
      */
     private function getMockClient(array $responses, array &$history = []) : HttpClient {

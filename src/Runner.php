@@ -85,7 +85,7 @@ class Runner {
             throw new RuntimeException('Unable to fetch managed teams, aborting...');
         }
 
-        $isManaged = function(AzureAdGroup $group) use ($managedTeams) {
+        $isManaged = function(AzureAdGroup $group) use ($managedTeams) : bool {
             $mailNickname = strtolower($group->getMailNickname());
 
             return 0 !== count(array_filter($managedTeams, function(AzureAdGroup $managedTeam) use ($mailNickname) {

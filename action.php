@@ -49,11 +49,14 @@ foreach ($requiredEnvVars as $requiredEnvVar) {
 }
 
 try {
-    $teams = Yaml::parseFile((string) getenv('TEAMS_YAML_PATH'))['teams'];
+    /** @var array{teams:array<array{name:string,description:string}>} */
+    $teamsFile = Yaml::parseFile((string) getenv('TEAMS_YAML_PATH'));
 } catch (ParseException $e) {
     output(sprintf('Invalid YAML in teams.yml: %s', $e->getMessage()));
     exit(1);
 }
+
+$teams = $teamsFile['teams'] ?? [];
 
 if (empty($teams)) {
     output('Team list is empty, exiting...');
@@ -80,7 +83,7 @@ $naisDeploymentApiClient = new NaisDeploymentApiClient(
     (string) getenv('NAIS_DEPLOYMENT_API_SECRET')
 );
 
-$committer       = (string) getenv('COMMITTER');
+$committer = (string) getenv('COMMITTER');
 
 try {
     $committerSamlId = $githubApiClient->getSamlId($committer);

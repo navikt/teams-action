@@ -6,5 +6,5 @@ parameters:
         - tests
     ignoreErrors:
         -
-            message: '#runRunner\(\) has parameter \$teams with no value type specified in iterable type array#'
+            message: '#Runner::run\(\) expects array#'
             path: tests/RunnerTest.php

@@ -1,9 +1,12 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Middleware;
-use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\{
+    Client as HttpClient,
+    Middleware,
+    Psr7\Request,
+    HandlerStack,
+};
 
 class NaisDeploymentApiClient {
     /**
@@ -30,18 +33,18 @@ class NaisDeploymentApiClient {
             ]);
         }
 
-        $httpClient
-            ->getConfig('handler')
-            ->unshift(Middleware::mapRequest(function(Request $request) use ($secret) : Request {
-                return $request->withHeader(
-                    'x-nais-signature',
-                    hash_hmac(
-                        'sha256',
-                        $request->getBody()->getContents(),
-                        (string) hex2bin($secret)
-                    )
-                );
-            }), self::ADD_SIGNATURE_MIDDLEWARE);
+        /** @var HandlerStack */
+        $handler = $httpClient->getConfig('handler');
+        $handler->unshift(Middleware::mapRequest(function(Request $request) use ($secret) : Request {
+            return $request->withHeader(
+                'x-nais-signature',
+                hash_hmac(
+                    'sha256',
+                    $request->getBody()->getContents(),
+                    (string) hex2bin($secret)
+                )
+            );
+        }), self::ADD_SIGNATURE_MIDDLEWARE);
 
         $this->httpClient = $httpClient;
     }

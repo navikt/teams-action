@@ -352,6 +352,7 @@ class RunnerTest extends TestCase {
     /**
      * Execute the runner
      *
+     * @param array<array{name?:string,description?:string}> $teams
      * @return Result
      */
     private function runRunner(array $teams) : Result {
