@@ -1,4 +1,4 @@
-FROM php:7.3-cli-alpine AS build
+FROM php:7.4-cli-alpine AS build
 WORKDIR /app
 COPY src ./src
 COPY composer.json composer.lock action.php ./

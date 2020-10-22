@@ -38,7 +38,7 @@ class ResultEntry implements JsonSerializable {
     /**
      * Serialize as JSON
      *
-     * @return array
+     * @return array{teamName: string, groupId: string}
      */
     public function jsonSerialize() : array {
         return [

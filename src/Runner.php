@@ -56,7 +56,7 @@ class Runner {
     /**
      * Validate the teams list
      *
-     * @param array $teams List of teams
+     * @param array<int, array{name: string, description: string}> $teams List of teams
      * @throws InvalidArgumentException
      * @return void
      */
@@ -75,7 +75,7 @@ class Runner {
     /**
      * Run the action
      *
-     * @param array $teams List of teams
+     * @param array<int, array{name: string, description: string}> $teams List of teams $teams List of teams
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $containerApplicationId
      * @param string $containerApplicationRoleId
@@ -196,29 +196,43 @@ class Runner {
                 }
             }
 
-            for ($failures = 0; $failures < 5; $failures++) {
-                try {
-                    $this->naisDeploymentApiClient->provisionTeamKey($teamName);
-                    $this->output->debug($teamName, 'NAIS deployment key has been provisioned');
-                    break;
-                } catch (ClientException $e) {
-                    if ($failures < 4) {
-                        $wait = pow(2, $failures + 2) - 1;
-                        $this->output->debug($teamName, sprintf(
-                            'Unable to provision a NAIS deployment key at the moment, waiting %d second(s)',
-                            $wait
-                        ));
-                        sleep((int) $wait);
-                    } else {
-                        $this->output->failure($teamName, sprintf(
-                            'Unable to provision NAIS deployment key, error message: %s',
-                            $e->getMessage()
-                        ));
-                    }
-                }
-            }
+            $this->provisionNaisDeploymentKey($teamName);
         }
 
         return $result;
+    }
+
+    /**
+     * Provision a Nais deployment key
+     *
+     * The method will try 5 times before failing. This is because the Azure API is sometimes slow
+     * to update, and the provisioning service fails because it can't find the group that we have
+     * recently created.
+     *
+     * @param string $teamName
+     * @return void
+     */
+    private function provisionNaisDeploymentKey(string $teamName) : void {
+        for ($failures = 0; $failures < 5; $failures++) {
+            try {
+                $this->naisDeploymentApiClient->provisionTeamKey($teamName);
+                $this->output->debug($teamName, 'NAIS deployment key has been provisioned');
+                break;
+            } catch (ClientException $e) {
+                if ($failures < 4) {
+                    $wait = pow(2, $failures + 2) - 1;
+                    $this->output->debug($teamName, sprintf(
+                        'Unable to provision a NAIS deployment key at the moment, waiting %d second(s)',
+                        $wait
+                    ));
+                    sleep((int) $wait);
+                } else {
+                    $this->output->failure($teamName, sprintf(
+                        'Unable to provision NAIS deployment key, error message: %s',
+                        $e->getMessage()
+                    ));
+                }
+            }
+        }
     }
 }
