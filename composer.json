@@ -16,9 +16,9 @@
     },
     "require": {
         "php": "^7.4",
-        "guzzlehttp/guzzle": "^6.3",
-        "navikt/aad-api-client": "^0.8",
-        "navikt/github-api-client": "^0.4",
+        "guzzlehttp/guzzle": "^7.2",
+        "navikt/aad-api-client": "^0.9",
+        "navikt/github-api-client": "^0.5",
         "symfony/yaml": "^5.0"
     },
     "require-dev": {

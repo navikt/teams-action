@@ -8,7 +8,6 @@ use NAVIT\Teams\Runner\{
 };
 use NAVIT\{
     AzureAd\ApiClient as AzureAdApiClient,
-    AzureAd\Models\Group as AzureAdGroup,
     GitHub\ApiClient as GitHubApiClient,
 };
 use GuzzleHttp\Exception\ClientException;
@@ -79,19 +78,21 @@ class Runner {
     ) : Result {
         $this->validateTeams($teams);
 
-        $managedTeams = $this->azureAdApiClient->getEnterpriseAppGroups($containerApplicationId);
+        $managedTeams = array_filter(
+            $this->azureAdApiClient->getEnterpriseAppGroups($containerApplicationId),
+            fn(array $group) : bool => !empty($group['mailNickname']),
+        );
 
         if (empty($managedTeams)) {
             throw new RuntimeException('Unable to fetch managed teams, aborting...');
         }
 
-        $isManaged = function(AzureAdGroup $group) use ($managedTeams) : bool {
-            $mailNickname = strtolower($group->getMailNickname());
-
-            return 0 !== count(array_filter($managedTeams, function(AzureAdGroup $managedTeam) use ($mailNickname) {
-                return $mailNickname === strtolower($managedTeam->getMailNickname());
-            }));
-        };
+        $isManaged = fn(array $group) : bool =>
+            0 !== count(array_filter(
+                $managedTeams,
+                fn(array $managedTeam) =>
+                    strtolower((string) $group['mailNickname']) === strtolower((string) $managedTeam['mailNickname'])
+            ));
 
         $result = new Result();
 
@@ -100,30 +101,32 @@ class Runner {
             $teamDescription = $team['description'];
             $resultEntry     = new ResultEntry($teamName);
 
+            /** @var ?array{id:string,displayName:string,mailNickname:string,description:string} */
             $aadGroup = $this->azureAdApiClient->getGroupByMailNickname($teamName);
 
             if (null !== $aadGroup) {
                 if (!$isManaged($aadGroup)) {
                     $this->output->debug($teamName, sprintf(
                         'A non-managed group with this name already exists in Azure AD with ID "%s", skipping...',
-                        $aadGroup->getId()
+                        $aadGroup['id']
                     ));
                     continue;
                 }
 
                 $this->output->debug($teamName, sprintf(
                     'Group already exists in Azure AD (ID "%s")',
-                    $aadGroup->getId()
+                    $aadGroup['id']
                 ));
 
-                if ($aadGroup->getDescription() !== $teamDescription) {
+                if ($aadGroup['description'] !== $teamDescription) {
                     $this->output->debug($teamName, 'Group description in Azure AD is out of sync, updating...');
-                    $this->azureAdApiClient->setGroupDescription($aadGroup->getId(), $teamDescription);
+                    $this->azureAdApiClient->setGroupDescription($aadGroup['id'], $teamDescription);
                 }
             } else {
                 $this->output->debug($teamName, 'Group does not exist in Azure AD, creating...');
 
                 try {
+                    /** @var array{id:string,displayName:string,mailNickname:string,description:string} */
                     $aadGroup = $this->azureAdApiClient->createGroup($teamName, $teamDescription, [$userObjectId], [$userObjectId]);
                 } catch (ClientException $e) {
                     $this->output->failure($teamName, sprintf(
@@ -135,42 +138,44 @@ class Runner {
 
                 $this->output->debug($teamName, sprintf(
                     'Group has been created in Azure AD, ID: "%s"',
-                    $aadGroup->getId()
+                    $aadGroup['id']
                 ));
 
                 try {
-                    $this->azureAdApiClient->addGroupToEnterpriseApp($aadGroup->getId(), $containerApplicationId, $containerApplicationRoleId);
+                    $this->azureAdApiClient->addGroupToEnterpriseApp($aadGroup['id'], $containerApplicationId, $containerApplicationRoleId);
                 } catch (ClientException $e) {
                     $this->output->failure($teamName, 'Unable to mark the Azure AD group as "managed", continuing to the next team...');
                     continue;
                 }
             }
 
-            $resultEntry->setGroupId($aadGroup->getId());
+            $resultEntry->setGroupId($aadGroup['id']);
             $result->addEntry($resultEntry);
 
+            /** @var ?array{id:int,name:string,slug:string} */
             $githubTeam = $this->githubApiClient->getTeam($teamName);
 
             if (null !== $githubTeam) {
                 $this->output->debug($teamName, sprintf(
                     'Team already exists on GitHub (ID: %d)',
-                    $githubTeam->getId())
+                    $githubTeam['id'])
                 );
             } else {
                 $this->output->debug($teamName, 'Team does not exist on GitHub, creating...');
 
                 try {
+                    /** @var array{id:int,name:string,slug:string} */
                     $githubTeam = $this->githubApiClient->createTeam($teamName, $teamDescription);
 
                     $this->output->debug($teamName, sprintf(
                         'Team has been created on GitHub, ID: %d',
-                        $githubTeam->getId()
+                        (int) $githubTeam['id']
                     ));
 
                     $this->output->debug($teamName, 'Enable sync between Azure AD group and GitHub team...');
 
                     try {
-                        $this->githubApiClient->syncTeamAndGroup($githubTeam->getSlug(), $aadGroup->getId(), $aadGroup->getDisplayName(), $aadGroup->getDescription());
+                        $this->githubApiClient->syncTeamAndGroup($githubTeam['slug'], $aadGroup['id'], $aadGroup['displayName'], $aadGroup['description']);
                     } catch (ClientException $e) {
                         $this->output->failure($teamName, sprintf(
                             'Unable to sync Azure AD group and GitHub team, error message: %s',

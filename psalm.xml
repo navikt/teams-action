@@ -21,15 +21,19 @@
                 <referencedFunction name="run" />
             </errorLevel>
         </ArgumentTypeCoercion>
-        <PropertyNotSetInConstructor>
-            <errorLevel type="suppress">
-                <directory name="tests" />
-            </errorLevel>
-        </PropertyNotSetInConstructor>
         <ReferenceConstraintViolation>
             <errorLevel type="suppress">
                 <file name="tests/NaisDeploymentApiClientTest.php" />
             </errorLevel>
         </ReferenceConstraintViolation>
+        <MixedArgumentTypeCoercion>
+            <errorLevel type="suppress">
+                <referencedFunction name="GuzzleHttp\HandlerStack::unshift" />
+                <file name="src/NaisDeploymentApiClient.php" />
+            </errorLevel>
+        </MixedArgumentTypeCoercion>
     </issueHandlers>
+    <plugins>
+        <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
+    </plugins>
 </psalm>
