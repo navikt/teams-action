@@ -6,8 +6,8 @@ use NAVIT\{
     GitHub\ApiClient as GitHubApiClient,
 };
 use Symfony\Component\Yaml\{
-    Yaml,
     Exception\ParseException,
+    Yaml,
 };
 use GuzzleHttp\Exception\ClientException;
 use InvalidArgumentException;
@@ -104,7 +104,8 @@ try {
         $teams,
         (string) $committerSamlId,
         (string) getenv('AZURE_AD_CONTAINER_APP_ID'),
-        (string) getenv('AZURE_AD_CONTAINER_APP_ROLE_ID')
+        (string) getenv('AZURE_AD_CONTAINER_APP_ROLE_ID'),
+        array_unique(array_filter(explode(',', str_replace(' ', '', (string) getenv('AAD_OWNER_GROUPS'))))),
     );
 } catch (InvalidArgumentException | RuntimeException $e) {
     output($e->getMessage());

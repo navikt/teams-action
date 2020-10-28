@@ -59,7 +59,7 @@ class RunnerTest extends TestCase {
             $this->azureAdApiClient,
             $this->githubApiClient,
             $this->naisDeploymentApiClient,
-            $this->output
+            $this->output,
         );
     }
 
@@ -172,13 +172,21 @@ class RunnerTest extends TestCase {
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
                 ['non-managed-team-name'],
-                ['new-team-name']
+                ['new-team-name'],
             )
             ->willReturnOnConsecutiveCalls(
                 $group1,
                 $group2,
                 $group3,
-                null // group not found
+                null, // group not found
+            );
+
+        $this->azureAdApiClient
+            ->expects($this->exactly(2))
+            ->method('addUserToGroup')
+            ->withConsecutive(
+                [$this->userObjectId, 'extra-group-1'],
+                [$this->userObjectId, 'extra-group-2'],
             );
 
         $this->azureAdApiClient
@@ -198,7 +206,7 @@ class RunnerTest extends TestCase {
             ->with(
                 'new-team-id',
                 $this->containerApplicationId,
-                $this->containerApplicationRoleId
+                $this->containerApplicationRoleId,
             );
 
         $githubTeam1 = $this->getGitHubTeam(123, 'managed-team-1-name', 'managed-team-1-name');
@@ -211,12 +219,12 @@ class RunnerTest extends TestCase {
             ->withConsecutive(
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
-                ['new-team-name']
+                ['new-team-name'],
             )
             ->willReturnOnConsecutiveCalls(
                 $githubTeam1,
                 null, // team not found
-                null  // team not found
+                null, // team not found
             );
 
         $this->githubApiClient
@@ -224,11 +232,11 @@ class RunnerTest extends TestCase {
             ->method('createTeam')
             ->withConsecutive(
                 ['managed-team-2-name', 'managed-team-2-new-description'],
-                ['new-team-name', 'new-team-description']
+                ['new-team-name', 'new-team-description'],
             )
             ->willReturnOnConsecutiveCalls(
                 $newGitHubTeam1,
-                $newGitHubTeam2
+                $newGitHubTeam2,
             );
 
         $this->githubApiClient
@@ -236,7 +244,7 @@ class RunnerTest extends TestCase {
             ->method('syncTeamAndGroup')
             ->withConsecutive(
                 ['managed-team-2-name', 'managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description'],
-                ['new-team-name', 'new-team-id', 'new-team-name', 'new-team-description']
+                ['new-team-name', 'new-team-id', 'new-team-name', 'new-team-description'],
             );
 
         $this->naisDeploymentApiClient
@@ -245,7 +253,7 @@ class RunnerTest extends TestCase {
             ->withConsecutive(
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
-                ['new-team-name']
+                ['new-team-name'],
             );
 
         $result = $this->runRunner([
@@ -265,6 +273,9 @@ class RunnerTest extends TestCase {
                 'name'        => 'new-team-name',
                 'description' => 'new-team-description',
             ],
+        ], [
+            'extra-group-1',
+            'extra-group-2',
         ]);
 
         $this->assertSame([
@@ -285,6 +296,7 @@ class RunnerTest extends TestCase {
 
     /**
      * @covers ::run
+     * @covers ::provisionTeamKey
      */
     public function testWillRetryNaisDeploymentProvisioning() : void {
         $this->azureAdApiClient
@@ -363,14 +375,16 @@ class RunnerTest extends TestCase {
      * Execute the runner
      *
      * @param array<array{name?:string,description?:string}> $teams
+     * @param string[] $extraGroups Extra groups to add the user to
      * @return Result
      */
-    private function runRunner(array $teams) : Result {
+    private function runRunner(array $teams, array $extraGroups = []) : Result {
         return $this->runner->run(
             $teams,
             $this->userObjectId,
             $this->containerApplicationId,
-            $this->containerApplicationRoleId
+            $this->containerApplicationRoleId,
+            $extraGroups,
         );
     }
 

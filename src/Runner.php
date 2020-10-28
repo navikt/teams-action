@@ -67,6 +67,7 @@ class Runner {
      * @param string $userObjectId ID The Azure AD user object ID that initiated the run
      * @param string $containerApplicationId
      * @param string $containerApplicationRoleId
+     * @param string[] $aadOwnerGroups Add the owner to these groups in AAD
      * @throws InvalidArgumentException Throws an exception if the teams array is invalid
      * @return Result
      */
@@ -74,7 +75,8 @@ class Runner {
         array $teams,
         string $userObjectId,
         string $containerApplicationId,
-        string $containerApplicationRoleId
+        string $containerApplicationRoleId,
+        array $aadOwnerGroups = []
     ) : Result {
         $this->validateTeams($teams);
 
@@ -190,29 +192,58 @@ class Runner {
                 }
             }
 
-            for ($failures = 0; $failures < 5; $failures++) {
-                try {
-                    $this->naisDeploymentApiClient->provisionTeamKey($teamName);
-                    $this->output->debug($teamName, 'NAIS deployment key has been provisioned');
-                    break;
-                } catch (ClientException $e) {
-                    if ($failures < 4) {
-                        $wait = pow(2, $failures + 2) - 1;
-                        $this->output->debug($teamName, sprintf(
-                            'Unable to provision a NAIS deployment key at the moment, waiting %d second(s)',
-                            $wait
-                        ));
-                        sleep((int) $wait);
-                    } else {
-                        $this->output->failure($teamName, sprintf(
-                            'Unable to provision NAIS deployment key, error message: %s',
-                            $e->getMessage()
-                        ));
-                    }
+            $this->provisionTeamKey($teamName);
+        }
+
+        $this->addOwnerToGroups($userObjectId, $aadOwnerGroups);
+
+        return $result;
+    }
+
+    /**
+     * Provision a team key
+     *
+     * @param string $teamName
+     * @return void
+     */
+    private function provisionTeamKey(string $teamName) : void {
+        for ($failures = 0; $failures < 5; $failures++) {
+            try {
+                $this->naisDeploymentApiClient->provisionTeamKey($teamName);
+                $this->output->debug($teamName, 'NAIS deployment key has been provisioned');
+                break;
+            } catch (ClientException $e) {
+                if ($failures < 4) {
+                    $wait = pow(2, $failures + 2) - 1;
+                    $this->output->debug($teamName, sprintf(
+                        'Unable to provision a NAIS deployment key at the moment, waiting %d second(s)',
+                        $wait
+                    ));
+                    sleep((int) $wait);
+                } else {
+                    $this->output->failure($teamName, sprintf(
+                        'Unable to provision NAIS deployment key, error message: %s',
+                        $e->getMessage()
+                    ));
                 }
             }
         }
+    }
 
-        return $result;
+    /**
+     * Add the committer to a list of groups
+     *
+     * @param string $userId
+     * @param string[] $groupIds
+     * @return void
+     */
+    private function addOwnerToGroups(string $userId, array $groupIds) : void {
+        foreach ($groupIds as $groupId) {
+            try {
+                $this->azureAdApiClient->addUserToGroup($userId, $groupId);
+            } catch (RuntimeException $e) {
+                // Ignore
+            }
+        }
     }
 }
