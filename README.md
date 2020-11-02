@@ -56,6 +56,12 @@ Hex-encoded secret used to create Nais deployment key for the teams.
 
 GitHub username of the user who committed the change. This user will be added as an owner to the created Azure AD group.
 
+## Optional environment variables
+
+### `AAD_OWNER_GROUPS`
+
+Comma separated list of Azure AD group object IDs to add the user object that is connected to `COMMITTER` to.
+
 ## Release a new version
 
 There is a workflow that runs when a tag starting with `v` is pushed, which publishes a docker image to [dockerhub](https://hub.docker.com/repository/docker/navikt/teams-action).

@@ -7,6 +7,9 @@ use PHPUnit\Framework\TestCase;
  * @coversDefaultClass NAVIT\Teams\Runner\Output
  */
 class OutputTest extends TestCase {
+    /**
+     * @return array<int,string[]>
+     */
     public function getMessages() : array {
         return [
             [

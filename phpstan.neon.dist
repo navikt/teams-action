@@ -1,0 +1,12 @@
+parameters:
+    level: max
+    paths:
+        - action.php
+        - src
+        - tests
+    scanFiles:
+        - action.php
+    ignoreErrors:
+        -
+            message: '#Runner::run\(\) expects array#'
+            path: tests/RunnerTest.php

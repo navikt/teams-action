@@ -1,10 +1,14 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use NAVIT\AzureAd\ApiClient as AzureApiClient;
-use NAVIT\GitHub\ApiClient as GitHubApiClient;
-use Symfony\Component\Yaml\Yaml;
-use Symfony\Component\Yaml\Exception\ParseException;
+use NAVIT\{
+    AzureAd\ApiClient as AzureApiClient,
+    GitHub\ApiClient as GitHubApiClient,
+};
+use Symfony\Component\Yaml\{
+    Exception\ParseException,
+    Yaml,
+};
 use GuzzleHttp\Exception\ClientException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -12,24 +16,22 @@ use RuntimeException;
 require __DIR__ . '/vendor/autoload.php';
 
 /**
- * Exit the script with a non-zero code and an error message
+ * Get an environment variable as a string
  *
- * @param string $message The message to output
- * @param int $code The exit code
- * @return void
+ * @param string $name
+ * @return string
  */
-function fail(string $message, int $code = 1) : void {
-    echo trim($message) . PHP_EOL;
-    exit($code);
+function env(string $name) : string {
+    return trim((string) getenv($name));
 }
 
 /**
- * Output a debug message
+ * Output a log message
  *
  * @param string $message The message to output
  * @return void
  */
-function debug(string $message) : void {
+function output(string $message) : void {
     echo trim($message) . PHP_EOL;
 }
 
@@ -46,54 +48,63 @@ $requiredEnvVars = [
     'COMMITTER',
     'GITHUB_PAT',
     'TEAMS_YAML_PATH',
-    'NAIS_DEPLOYMENT_API_SECRET'
+    'NAIS_DEPLOYMENT_API_SECRET',
 ];
 
 foreach ($requiredEnvVars as $requiredEnvVar) {
-    if (false === getenv($requiredEnvVar)) {
-        fail(sprintf('Missing required ENV var: "%s"', $requiredEnvVar));
+    if ('' === env($requiredEnvVar)) {
+        output(sprintf('Required ENV var is either missing or empty: "%s"', $requiredEnvVar));
+        exit(1);
     }
 }
 
 try {
-    $teams = Yaml::parseFile(getenv('TEAMS_YAML_PATH'))['teams'];
+    /** @var array{teams:array<array{name:string,description:string}>} */
+    $teamsFile = Yaml::parseFile(env('TEAMS_YAML_PATH'));
 } catch (ParseException $e) {
-    fail(sprintf('Invalid YAML in teams.yml: %s', $e->getMessage()));
+    output(sprintf('Invalid YAML in teams.yml: %s', $e->getMessage()));
+    exit(1);
 }
 
+$teams = $teamsFile['teams'] ?? [];
+
 if (empty($teams)) {
-    debug('Team list is empty, exiting...');
+    output('Team list is empty, exiting...');
     exit;
 }
 
 try {
     $azureApiClient = new AzureApiClient(
-        getenv('AZURE_AD_APP_ID'),
-        getenv('AZURE_AD_APP_SECRET')
+        env('AZURE_AD_APP_ID'),
+        env('AZURE_AD_APP_SECRET'),
+        'nav.no',
     );
 } catch (ClientException $e) {
-    fail(sprintf('Unable to create Azure API client: %s', $e->getMessage()));
+    output(sprintf('Unable to create Azure API client: %s', $e->getMessage()));
+    exit(1);
 }
 
 $githubApiClient = new GitHubApiClient(
     'navikt',
-    getenv('GITHUB_PAT')
+    env('GITHUB_PAT'),
 );
 
 $naisDeploymentApiClient = new NaisDeploymentApiClient(
-    getenv('NAIS_DEPLOYMENT_API_SECRET')
+    env('NAIS_DEPLOYMENT_API_SECRET'),
 );
 
-$committer = getenv('COMMITTER');
+$committer = env('COMMITTER');
 
 try {
     $committerSamlId = $githubApiClient->getSamlId($committer);
 } catch (ClientException $e) {
-    fail(sprintf('Unable to get SAML ID for committer with username "%s": %s', $committer, $e->getMessage()));
+    output(sprintf('Unable to get SAML ID for committer with username "%s": %s', $committer, $e->getMessage()));
+    exit(1);
 }
 
 if (null === $committerSamlId) {
-    fail(sprintf('Unable to find SAML ID for committer "%s"', $committer));
+    output(sprintf('Unable to find SAML ID for committer "%s"', $committer));
+    exit(1);
 }
 
 $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient);
@@ -101,12 +112,14 @@ $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient
 try {
     $result = $runner->run(
         $teams,
-        $committerSamlId,
-        getenv('AZURE_AD_CONTAINER_APP_ID'),
-        getenv('AZURE_AD_CONTAINER_APP_ROLE_ID')
+        (string) $committerSamlId,
+        env('AZURE_AD_CONTAINER_APP_ID'),
+        env('AZURE_AD_CONTAINER_APP_ROLE_ID'),
+        array_unique(array_filter(explode(',', str_replace(' ', '', env('AAD_OWNER_GROUPS'))))),
     );
 } catch (InvalidArgumentException | RuntimeException $e) {
-    fail($e->getMessage());
+    output($e->getMessage());
+    exit(1);
 }
 
 echo PHP_EOL . sprintf('::set-output name=results::%s', json_encode($result));

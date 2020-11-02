@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="1"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+>
+    <projectFiles>
+        <file name="action.php" />
+        <directory name="src" />
+        <directory name="tests" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+    <issueHandlers>
+        <ArgumentTypeCoercion>
+            <errorLevel type="suppress">
+                <file name="tests/RunnerTest.php" />
+                <referencedFunction name="run" />
+            </errorLevel>
+        </ArgumentTypeCoercion>
+        <ReferenceConstraintViolation>
+            <errorLevel type="suppress">
+                <file name="tests/NaisDeploymentApiClientTest.php" />
+            </errorLevel>
+        </ReferenceConstraintViolation>
+        <MixedArgumentTypeCoercion>
+            <errorLevel type="suppress">
+                <referencedFunction name="GuzzleHttp\HandlerStack::unshift" />
+                <file name="src/NaisDeploymentApiClient.php" />
+            </errorLevel>
+        </MixedArgumentTypeCoercion>
+    </issueHandlers>
+    <plugins>
+        <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
+    </plugins>
+</psalm>

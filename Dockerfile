@@ -1,4 +1,4 @@
-FROM php:7.3-cli-alpine AS build
+FROM php:7.4-cli-alpine AS build
 WORKDIR /app
 COPY src ./src
 COPY composer.json composer.lock action.php ./
@@ -17,7 +17,7 @@ USER teams
 RUN php composer.phar install -o --no-dev --no-plugins --no-scripts --no-ansi && \
     rm composer.phar
 
-FROM php:7.3-cli-alpine
+FROM php:7.4-cli-alpine
 LABEL "repository"="https://github.com/navikt/teams-action"
 LABEL "maintainer"="@navikt/aura"
 COPY --from=build /app /app

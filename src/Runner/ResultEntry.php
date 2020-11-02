@@ -4,17 +4,8 @@ namespace NAVIT\Teams\Runner;
 use JsonSerializable;
 
 class ResultEntry implements JsonSerializable {
-    /**
-     * @var string
-     */
-    private $teamName;
-
-    /**
-     * Azure AD group ID
-     *
-     * @var string
-     */
-    private $groupId;
+    private string $teamName;
+    private ?string $groupId = null;
 
     /**
      * Class constructor
@@ -38,7 +29,7 @@ class ResultEntry implements JsonSerializable {
     /**
      * Serialize as JSON
      *
-     * @return array
+     * @return array{teamName:string,groupId:?string}
      */
     public function jsonSerialize() : array {
         return [

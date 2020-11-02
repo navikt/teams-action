@@ -4,3 +4,4 @@ phpunit.xml
 .phpunit.result.cache
 test.php
 teams.yml
+.env*

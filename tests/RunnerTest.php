@@ -1,16 +1,20 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use NAVIT\AzureAd\ApiClient as AzureAdApiClient;
-use NAVIT\AzureAd\Models\Group as AzureAdGroup;
-use NAVIT\GitHub\ApiClient as GitHubApiClient;
-use NAVIT\GitHub\Models\Team as GitHubTeam;
-use NAVIT\Teams\Runner\Output;
-use NAVIT\Teams\Runner\Result;
+use NAVIT\{
+    AzureAd\ApiClient as AzureAdApiClient,
+    GitHub\ApiClient as GitHubApiClient,
+    Teams\Runner\Output,
+    Teams\Runner\Result,
+};
 use GuzzleHttp\Exception\ClientException;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\{
+    MockObject\MockObject,
+    TestCase,
+};
 use Psr\Http\Message\RequestInterface;
 use InvalidArgumentException;
+use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
 /**
@@ -28,36 +32,40 @@ function sleep(int $seconds) : int {
  * @coversDefaultClass NAVIT\Teams\Runner
  */
 class RunnerTest extends TestCase {
-    private $azureAdApiClient;
-    private $githubApiClient;
-    private $naisDeploymentApiClient;
-    private $userObjectId = 'user-object-id';
-    private $containerApplicationId = 'container-application-id';
-    private $containerApplicationRoleId = 'conatiner-application-role-id';
-    private $output;
-    private $runner;
+    /** @var AzureAdApiClient&MockObject */
+    private AzureAdApiClient $azureAdApiClient;
+
+    /** @var GitHubApiClient&MockObject */
+    private GitHubApiClient $githubApiClient;
+
+    /** @var NaisDeploymentApiClient&MockObject */
+    private NaisDeploymentApiClient $naisDeploymentApiClient;
+
+    /** @var Output&MockObject */
+    private Output $output;
+
+    private string $userObjectId = 'user-object-id';
+    private string $containerApplicationId = 'container-application-id';
+    private string $containerApplicationRoleId = 'container-application-role-id';
+    private Runner $runner;
 
     public function setUp() : void {
-        /** @var AzureAdApiClient */
         $this->azureAdApiClient = $this->createMock(AzureAdApiClient::class);
-
-        /** @var GitHubApiClient */
         $this->githubApiClient = $this->createMock(GitHubApiClient::class);
-
-        /** @var NaisDeploymentApiClient */
         $this->naisDeploymentApiClient = $this->createMock(NaisDeploymentApiClient::class);
-
-        /** @var Output */
         $this->output = $this->createMock(Output::class);
 
         $this->runner = new Runner(
             $this->azureAdApiClient,
             $this->githubApiClient,
             $this->naisDeploymentApiClient,
-            $this->output
+            $this->output,
         );
     }
 
+    /**
+     * @return array<string,array{0:array{description?:string,name?:string},1:string}>
+     */
     public function getInvalidTeams() : array {
         return [
             'missing name' => [
@@ -79,6 +87,7 @@ class RunnerTest extends TestCase {
      * @dataProvider getInvalidTeams
      * @covers ::run
      * @covers ::validateTeams
+     * @param array{description?:string,name?:string} $team
      */
     public function testThrowsExceptionOnInvalidTeamsArray(array $team, string $expectedErrorMessage) : void {
         $this->expectExceptionObject(new InvalidArgumentException($expectedErrorMessage));
@@ -109,19 +118,21 @@ class RunnerTest extends TestCase {
             ->expects($this->once())
             ->method('getEnterpriseAppGroups')
             ->with($this->containerApplicationId)
-            ->willReturn([$this->createConfiguredMock(AzureAdGroup::class, [
-                'getMailNickname' => 'managed-group-name',
-                'getId' => 'managed-group-id',
-            ])]);
+            ->willReturn([
+                [
+                    'id'           => 'managed-group-id',
+                    'mailNickname' => 'managed-group-mail',
+                ],
+            ]);
 
         $this->azureAdApiClient
             ->expects($this->once())
             ->method('getGroupByMailNickname')
             ->with('non-managed-group-name')
-            ->willReturn($this->createConfiguredMock(AzureAdGroup::class, [
-                'getMailNickname' => 'non-managed-group-name',
-                'getId' => 'non-managed-group-id',
-            ]));
+            ->willReturn([
+                'id'           => 'non-managed-group-id',
+                'mailNickname' => 'non-managed-group-name',
+            ]);
 
         $this->output
             ->expects($this->once())
@@ -136,14 +147,14 @@ class RunnerTest extends TestCase {
      * @covers ::run
      */
     public function testSupportsRunningWithMultipleTeams() : void {
-        $managedGroup1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
-        $managedGroup2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2');
+        $managedGroup1 = $this->getAadGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
+        $managedGroup2 = $this->getAadGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2');
 
-        $group1 = new AzureAdGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
-        $group2 = new AzureAdGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2');
-        $group3 = new AzureAdGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description', 'somemail');
+        $group1 = $this->getAadGroup('managed-team-1-id', 'managed-team-1-name', 'managed-team-1-description', 'mail1');
+        $group2 = $this->getAadGroup('managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description', 'mail2');
+        $group3 = $this->getAadGroup('non-managed-team-id', 'non-managed-team-name', 'non-managed-team-description', 'somemail');
 
-        $newGroup = new AzureAdGroup('new-team-id', 'new-team-name', 'new-team-description', 'new');
+        $newGroup = $this->getAadGroup('new-team-id', 'new-team-name', 'new-team-description', 'new');
 
         $this->azureAdApiClient
             ->expects($this->once())
@@ -161,13 +172,21 @@ class RunnerTest extends TestCase {
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
                 ['non-managed-team-name'],
-                ['new-team-name']
+                ['new-team-name'],
             )
             ->willReturnOnConsecutiveCalls(
                 $group1,
                 $group2,
                 $group3,
-                null // group not found
+                null, // group not found
+            );
+
+        $this->azureAdApiClient
+            ->expects($this->exactly(2))
+            ->method('addUserToGroup')
+            ->withConsecutive(
+                [$this->userObjectId, 'extra-group-1'],
+                [$this->userObjectId, 'extra-group-2'],
             );
 
         $this->azureAdApiClient
@@ -187,12 +206,12 @@ class RunnerTest extends TestCase {
             ->with(
                 'new-team-id',
                 $this->containerApplicationId,
-                $this->containerApplicationRoleId
+                $this->containerApplicationRoleId,
             );
 
-        $githubTeam1 = new GitHubTeam(123, 'managed-team-1-name', 'managed-team-1-name');
-        $newGitHubTeam1 = new GitHubTeam(456, 'managed-team-2-name', 'managed-team-2-name');
-        $newGitHubTeam2 = new GitHubTeam(789, 'new-team-name', 'new-team-name');
+        $githubTeam1 = $this->getGitHubTeam(123, 'managed-team-1-name', 'managed-team-1-name');
+        $newGitHubTeam1 = $this->getGitHubTeam(456, 'managed-team-2-name', 'managed-team-2-name');
+        $newGitHubTeam2 = $this->getGitHubTeam(789, 'new-team-name', 'new-team-name');
 
         $this->githubApiClient
             ->expects($this->exactly(3))
@@ -200,12 +219,12 @@ class RunnerTest extends TestCase {
             ->withConsecutive(
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
-                ['new-team-name']
+                ['new-team-name'],
             )
             ->willReturnOnConsecutiveCalls(
                 $githubTeam1,
                 null, // team not found
-                null  // team not found
+                null, // team not found
             );
 
         $this->githubApiClient
@@ -213,11 +232,11 @@ class RunnerTest extends TestCase {
             ->method('createTeam')
             ->withConsecutive(
                 ['managed-team-2-name', 'managed-team-2-new-description'],
-                ['new-team-name', 'new-team-description']
+                ['new-team-name', 'new-team-description'],
             )
             ->willReturnOnConsecutiveCalls(
                 $newGitHubTeam1,
-                $newGitHubTeam2
+                $newGitHubTeam2,
             );
 
         $this->githubApiClient
@@ -225,7 +244,7 @@ class RunnerTest extends TestCase {
             ->method('syncTeamAndGroup')
             ->withConsecutive(
                 ['managed-team-2-name', 'managed-team-2-id', 'managed-team-2-name', 'managed-team-2-description'],
-                ['new-team-name', 'new-team-id', 'new-team-name', 'new-team-description']
+                ['new-team-name', 'new-team-id', 'new-team-name', 'new-team-description'],
             );
 
         $this->naisDeploymentApiClient
@@ -234,7 +253,7 @@ class RunnerTest extends TestCase {
             ->withConsecutive(
                 ['managed-team-1-name'],
                 ['managed-team-2-name'],
-                ['new-team-name']
+                ['new-team-name'],
             );
 
         $result = $this->runRunner([
@@ -254,6 +273,9 @@ class RunnerTest extends TestCase {
                 'name'        => 'new-team-name',
                 'description' => 'new-team-description',
             ],
+        ], [
+            'extra-group-1',
+            'extra-group-2',
         ]);
 
         $this->assertSame([
@@ -269,18 +291,19 @@ class RunnerTest extends TestCase {
                 'teamName' => 'new-team-name',
                 'groupId'  => 'new-team-id',
             ],
-        ], json_decode(json_encode($result), true));
+        ], json_decode((string) json_encode($result), true));
     }
 
     /**
      * @covers ::run
+     * @covers ::provisionTeamKey
      */
     public function testWillRetryNaisDeploymentProvisioning() : void {
         $this->azureAdApiClient
             ->expects($this->once())
             ->method('getEnterpriseAppGroups')
             ->willReturn([
-                new AzureAdGroup('id', 'name', 'description', 'name')
+                $this->getAadGroup('id', 'name', 'description', 'mail')
             ]);
 
         $this->azureAdApiClient
@@ -293,17 +316,22 @@ class RunnerTest extends TestCase {
             ->expects($this->once())
             ->method('createGroup')
             ->with('newname', 'newdescription', [$this->userObjectId], [$this->userObjectId])
-            ->willReturn($this->createConfiguredMock(AzureAdGroup::class, [
-                'getId' => 'newid',
-            ]));
+            ->willReturn([
+                'id'           => 'newid',
+                'description'  => 'newdescription',
+                'displayName'  => 'newname',
+                'mailNickname' => 'newname@example.com',
+            ]);
 
         $this->githubApiClient
             ->expects($this->once())
             ->method('createTeam')
             ->with('newname', 'newdescription')
-            ->willReturn($this->createConfiguredMock(GitHubTeam::class, [
-                'getId' => 123,
-            ]));
+            ->willReturn([
+                'id'   => 123,
+                'name' => 'newname',
+                'slug' => 'newname',
+            ]);
 
         $this->output
             ->method('debug')
@@ -327,7 +355,11 @@ class RunnerTest extends TestCase {
         $this->naisDeploymentApiClient
             ->method('provisionTeamKey')
             ->with('newname')
-            ->willThrowException(new ClientException('some failure', $this->createMock(RequestInterface::class)));
+            ->willThrowException(new ClientException(
+                'some failure',
+                $this->createMock(RequestInterface::class),
+                $this->createMock(ResponseInterface::class),
+            ));
 
         $this->expectOutputString('sleep 3sleep 7sleep 15sleep 31');
 
@@ -342,15 +374,51 @@ class RunnerTest extends TestCase {
     /**
      * Execute the runner
      *
-     * @param array $teams
+     * @param array<array{name?:string,description?:string}> $teams
+     * @param string[] $extraGroups Extra groups to add the user to
      * @return Result
      */
-    private function runRunner(array $teams) : Result {
+    private function runRunner(array $teams, array $extraGroups = []) : Result {
         return $this->runner->run(
             $teams,
             $this->userObjectId,
             $this->containerApplicationId,
-            $this->containerApplicationRoleId
+            $this->containerApplicationRoleId,
+            $extraGroups,
         );
+    }
+
+    /**
+     * Get an AAD group
+     *
+     * @param string $id
+     * @param string $displayName
+     * @param string $description
+     * @param string $mailNickname
+     * @return array{id:string,displayName:string,description:string,mailNickname:string}
+     */
+    private function getAadGroup(string $id, string $displayName, string $description, string $mailNickname) : array {
+        return [
+            'id'           => $id,
+            'displayName'  => $displayName,
+            'description'  => $description,
+            'mailNickname' => $mailNickname,
+        ];
+    }
+
+    /**
+     * Get a GitHub team
+     *
+     * @param int $id
+     * @param string $name
+     * @param string $slug
+     * @return array{id:int,name:string,slug:string}
+     */
+    private function getGitHubTeam(int $id, string $name, string $slug) : array {
+        return [
+            'id'   => $id,
+            'name' => $name,
+            'slug' => $slug,
+        ];
     }
 }
