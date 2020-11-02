@@ -48,7 +48,7 @@ $requiredEnvVars = [
     'COMMITTER',
     'GITHUB_PAT',
     'TEAMS_YAML_PATH',
-    'NAIS_DEPLOYMENT_API_SECRET'
+    'NAIS_DEPLOYMENT_API_SECRET',
 ];
 
 foreach ($requiredEnvVars as $requiredEnvVar) {
@@ -86,11 +86,11 @@ try {
 
 $githubApiClient = new GitHubApiClient(
     'navikt',
-    env('GITHUB_PAT')
+    env('GITHUB_PAT'),
 );
 
 $naisDeploymentApiClient = new NaisDeploymentApiClient(
-    env('NAIS_DEPLOYMENT_API_SECRET')
+    env('NAIS_DEPLOYMENT_API_SECRET'),
 );
 
 $committer = env('COMMITTER');
