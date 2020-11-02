@@ -16,6 +16,16 @@ use RuntimeException;
 require __DIR__ . '/vendor/autoload.php';
 
 /**
+ * Get an environment variable as a string
+ *
+ * @param string $name
+ * @return string
+ */
+function env(string $name) : string {
+    return trim((string) getenv($name));
+}
+
+/**
  * Output a log message
  *
  * @param string $message The message to output
@@ -42,15 +52,15 @@ $requiredEnvVars = [
 ];
 
 foreach ($requiredEnvVars as $requiredEnvVar) {
-    if (false === getenv($requiredEnvVar)) {
-        output(sprintf('Missing required ENV var: "%s"', $requiredEnvVar));
+    if ('' === env($requiredEnvVar)) {
+        output(sprintf('Required ENV var is either missing or empty: "%s"', $requiredEnvVar));
         exit(1);
     }
 }
 
 try {
     /** @var array{teams:array<array{name:string,description:string}>} */
-    $teamsFile = Yaml::parseFile((string) getenv('TEAMS_YAML_PATH'));
+    $teamsFile = Yaml::parseFile(env('TEAMS_YAML_PATH'));
 } catch (ParseException $e) {
     output(sprintf('Invalid YAML in teams.yml: %s', $e->getMessage()));
     exit(1);
@@ -65,8 +75,8 @@ if (empty($teams)) {
 
 try {
     $azureApiClient = new AzureApiClient(
-        (string) getenv('AZURE_AD_APP_ID'),
-        (string) getenv('AZURE_AD_APP_SECRET'),
+        env('AZURE_AD_APP_ID'),
+        env('AZURE_AD_APP_SECRET'),
         'nav.no',
     );
 } catch (ClientException $e) {
@@ -76,14 +86,14 @@ try {
 
 $githubApiClient = new GitHubApiClient(
     'navikt',
-    (string) getenv('GITHUB_PAT')
+    env('GITHUB_PAT')
 );
 
 $naisDeploymentApiClient = new NaisDeploymentApiClient(
-    (string) getenv('NAIS_DEPLOYMENT_API_SECRET')
+    env('NAIS_DEPLOYMENT_API_SECRET')
 );
 
-$committer = (string) getenv('COMMITTER');
+$committer = env('COMMITTER');
 
 try {
     $committerSamlId = $githubApiClient->getSamlId($committer);
@@ -103,9 +113,9 @@ try {
     $result = $runner->run(
         $teams,
         (string) $committerSamlId,
-        (string) getenv('AZURE_AD_CONTAINER_APP_ID'),
-        (string) getenv('AZURE_AD_CONTAINER_APP_ROLE_ID'),
-        array_unique(array_filter(explode(',', str_replace(' ', '', (string) getenv('AAD_OWNER_GROUPS'))))),
+        env('AZURE_AD_CONTAINER_APP_ID'),
+        env('AZURE_AD_CONTAINER_APP_ROLE_ID'),
+        array_unique(array_filter(explode(',', str_replace(' ', '', env('AAD_OWNER_GROUPS'))))),
     );
 } catch (InvalidArgumentException | RuntimeException $e) {
     output($e->getMessage());

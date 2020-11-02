@@ -4,6 +4,8 @@ parameters:
         - action.php
         - src
         - tests
+    scanFiles:
+        - action.php
     ignoreErrors:
         -
             message: '#Runner::run\(\) expects array#'
