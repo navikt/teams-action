@@ -1,17 +1,17 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
+use GuzzleHttp\Exception\ClientException;
+use InvalidArgumentException;
 use NAVIT\{
     AzureAd\ApiClient as AzureApiClient,
     GitHub\ApiClient as GitHubApiClient,
 };
+use RuntimeException;
 use Symfony\Component\Yaml\{
     Exception\ParseException,
     Yaml,
 };
-use GuzzleHttp\Exception\ClientException;
-use InvalidArgumentException;
-use RuntimeException;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -72,6 +72,8 @@ if (empty($teams)) {
     output('Team list is empty, exiting...');
     exit;
 }
+
+usort($teams, fn(array $a, array $b) : int => strcmp($a['name'], $b['name']));
 
 try {
     $azureApiClient = new AzureApiClient(
