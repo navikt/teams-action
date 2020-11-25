@@ -36,6 +36,17 @@ function output(string $message) : void {
 }
 
 /**
+ * Sort teams by name
+ *
+ * @param array{name:string} $a
+ * @param array{name:string} $b
+ * @return int
+ */
+function sortTeam(array $a, array $b) : int {
+    return strcmp($a['name'], $b['name']);
+}
+
+/**
  * A list of required environment variables
  *
  * @var string[]
@@ -73,7 +84,7 @@ if (empty($teams)) {
     exit;
 }
 
-usort($teams, fn(array $a, array $b) : int => strcmp($a['name'], $b['name']));
+usort($teams, 'NAVIT\Teams\sortTeam');
 
 try {
     $azureApiClient = new AzureApiClient(

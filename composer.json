@@ -44,7 +44,7 @@
         "test": "vendor/bin/phpunit",
         "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
         "phpstan": "vendor/bin/phpstan analyse",
-        "psalm": "vendor/bin/psalm",
+        "psalm": "vendor/bin/psalm --no-cache",
         "sa": [
             "@phpstan",
             "@psalm"
