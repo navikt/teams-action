@@ -132,9 +132,9 @@ class Runner
                     $this->output->failure(
                         $teamName,
                         sprintf(
-                        'Unable to create Azure AD group, error message: %s',
-                        $e->getMessage()
-                    )
+                            'Unable to create Azure AD group, error message: %s',
+                            $e->getMessage()
+                        )
                     );
                     continue;
                 }
@@ -162,9 +162,9 @@ class Runner
                 $this->output->debug(
                     $teamName,
                     sprintf(
-                    'Team already exists on GitHub (ID: %d)',
-                    $githubTeam['id']
-                )
+                        'Team already exists on GitHub (ID: %d)',
+                        $githubTeam['id']
+                    )
                 );
             } else {
                 $this->output->debug($teamName, 'Team does not exist on GitHub, creating...');
@@ -192,9 +192,9 @@ class Runner
                     $this->output->failure(
                         $teamName,
                         sprintf(
-                        'Unable to create GitHub team, error message: %s',
-                        $e->getMessage()
-                    )
+                            'Unable to create GitHub team, error message: %s',
+                            $e->getMessage()
+                        )
                     );
                 }
             }
