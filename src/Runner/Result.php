@@ -3,7 +3,8 @@ namespace NAVIT\Teams\Runner;
 
 use JsonSerializable;
 
-class Result implements JsonSerializable {
+class Result implements JsonSerializable
+{
     /**
      * Result entries
      *
@@ -17,7 +18,8 @@ class Result implements JsonSerializable {
      * @param ResultEntry $entry
      * @return void
      */
-    public function addEntry(ResultEntry $entry) : void {
+    public function addEntry(ResultEntry $entry): void
+    {
         $this->entries[] = $entry;
     }
 
@@ -26,7 +28,8 @@ class Result implements JsonSerializable {
      *
      * @return ResultEntry[]
      */
-    public function jsonSerialize() : array {
+    public function jsonSerialize(): array
+    {
         return $this->entries;
     }
 }

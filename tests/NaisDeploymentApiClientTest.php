@@ -1,30 +1,30 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
-use GuzzleHttp\{
-    Client as HttpClient,
-    Exception\ClientException,
-    Handler\MockHandler,
-    HandlerStack,
-    Psr7\Response,
-    Psr7\Request,
-    Middleware,
-};
 
 /**
  * Namespaced time function to return a static timestamp
  *
  * @return int
  */
-function time() : int {
+function time(): int
+{
     return 1603707356;
 }
 
 /**
  * @coversDefaultClass NAVIT\Teams\NaisDeploymentApiClient
  */
-class NaisDeploymentApiClientTest extends TestCase {
+class NaisDeploymentApiClientTest extends TestCase
+{
     /**
      * Get a mock Guzzle Client with a history middleware
      *
@@ -33,7 +33,8 @@ class NaisDeploymentApiClientTest extends TestCase {
      * @param-out array<array{response:Response,request:Request}> $history
      * @return HttpClient
      */
-    private function getMockClient(array $responses, array &$history = []) : HttpClient {
+    private function getMockClient(array $responses, array &$history = []): HttpClient
+    {
         $handler = HandlerStack::create(new MockHandler($responses));
         $handler->push(Middleware::history($history));
 
@@ -44,7 +45,8 @@ class NaisDeploymentApiClientTest extends TestCase {
      * @covers ::__construct
      * @covers ::provisionTeamKey
      */
-    public function testCanProvisionTeamKey() : void {
+    public function testCanProvisionTeamKey(): void
+    {
         $history = [];
         $httpClient = $this->getMockClient([new Response(201)], $history);
         (new NaisDeploymentApiClient('736563726574', $httpClient))->provisionTeamKey('my-team');
@@ -58,7 +60,8 @@ class NaisDeploymentApiClientTest extends TestCase {
     /**
      * @covers ::provisionTeamKey
      */
-    public function testReturnsFalseWhenKeyProvisioningFails() : void {
+    public function testReturnsFalseWhenKeyProvisioningFails(): void
+    {
         $httpClient = $this->getMockClient([new Response(403)]);
         $this->expectException(ClientException::class);
         (new NaisDeploymentApiClient('736563726574', $httpClient))->provisionTeamKey('my-team');

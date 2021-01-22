@@ -3,48 +3,13 @@ namespace NAVIT\Teams;
 
 use GuzzleHttp\Exception\ClientException;
 use InvalidArgumentException;
-use NAVIT\{
-    AzureAd\ApiClient as AzureApiClient,
-    GitHub\ApiClient as GitHubApiClient,
-};
+use NAVIT\AzureAd\ApiClient as AzureApiClient;
+use NAVIT\GitHub\ApiClient as GitHubApiClient;
 use RuntimeException;
-use Symfony\Component\Yaml\{
-    Exception\ParseException,
-    Yaml,
-};
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 
 require __DIR__ . '/vendor/autoload.php';
-
-/**
- * Get an environment variable as a string
- *
- * @param string $name
- * @return string
- */
-function env(string $name) : string {
-    return trim((string) getenv($name));
-}
-
-/**
- * Output a log message
- *
- * @param string $message The message to output
- * @return void
- */
-function output(string $message) : void {
-    echo trim($message) . PHP_EOL;
-}
-
-/**
- * Sort teams by name
- *
- * @param array{name:string} $a
- * @param array{name:string} $b
- * @return int
- */
-function sortTeam(array $a, array $b) : int {
-    return strcmp($a['name'], $b['name']);
-}
 
 /**
  * A list of required environment variables

@@ -6,11 +6,13 @@ use PHPUnit\Framework\TestCase;
 /**
  * @coversDefaultClass NAVIT\Teams\Runner\Output
  */
-class OutputTest extends TestCase {
+class OutputTest extends TestCase
+{
     /**
      * @return array<int,string[]>
      */
-    public function getMessages() : array {
+    public function getMessages(): array
+    {
         return [
             [
                 'team',
@@ -30,7 +32,8 @@ class OutputTest extends TestCase {
      * @covers ::debug
      * @covers ::normalize
      */
-    public function testCanOutputDebugMessage(string $team, string $rawMessage, string $output) : void {
+    public function testCanOutputDebugMessage(string $team, string $rawMessage, string $output): void
+    {
         $this->expectOutputString($output);
         (new Output())->debug($team, $rawMessage);
     }
@@ -40,7 +43,8 @@ class OutputTest extends TestCase {
      * @covers ::failure
      * @covers ::normalize
      */
-    public function testCanOutputFailureMessage(string $team, string $rawMessage, string $output) : void {
+    public function testCanOutputFailureMessage(string $team, string $rawMessage, string $output): void
+    {
         $this->expectOutputString($output);
         (new Output())->failure($team, $rawMessage);
     }
@@ -50,7 +54,8 @@ class OutputTest extends TestCase {
      * @covers ::debug
      * @covers ::failure
      */
-    public function testCanCheckForFailures() : void {
+    public function testCanCheckForFailures(): void
+    {
         $output = new Output();
         $this->assertFalse($output->hasFailures(), 'Did not expect failures');
         $this->expectOutputString('[team] some message' . PHP_EOL);

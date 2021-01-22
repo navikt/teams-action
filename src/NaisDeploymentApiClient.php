@@ -1,14 +1,13 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use GuzzleHttp\{
-    Client as HttpClient,
-    HandlerStack,
-    Middleware,
-    Psr7\Request,
-};
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
 
-class NaisDeploymentApiClient {
+class NaisDeploymentApiClient
+{
     private HttpClient $httpClient;
 
     /**
@@ -17,10 +16,12 @@ class NaisDeploymentApiClient {
      * @param string $secret Hex-encoded secret
      * @param HttpClient $httpClient Pre-configured HTTP client instance
      */
-    public function __construct(string $secret, HttpClient $httpClient = null) {
+    public function __construct(string $secret, HttpClient $httpClient = null)
+    {
         if (null === $httpClient) {
             $handler = HandlerStack::create();
-            $handler->unshift(Middleware::mapRequest(fn(Request $request) : Request =>
+            $handler->unshift(Middleware::mapRequest(
+                fn (Request $request): Request =>
                 $request->withHeader(
                     'x-nais-signature',
                     hash_hmac(
@@ -46,13 +47,16 @@ class NaisDeploymentApiClient {
      * @param string $team The name of the team
      * @return void
      */
-    public function provisionTeamKey(string $team) : void {
-        $this->httpClient->post('provision', [
-            'json' => [
-                'team'      => $team,
-                'rotate'    => false,
-                'timestamp' => time(),
-            ]]
+    public function provisionTeamKey(string $team): void
+    {
+        $this->httpClient->post(
+            'provision',
+            [
+                'json' => [
+                    'team'      => $team,
+                    'rotate'    => false,
+                    'timestamp' => time(),
+                ], ]
         );
     }
 }

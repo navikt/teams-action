@@ -1,21 +1,18 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams;
 
-use NAVIT\Teams\Runner\{
-    Output,
-    Result,
-    ResultEntry,
-};
-use NAVIT\{
-    AzureAd\ApiClient as AzureAdApiClient,
-    GitHub\ApiClient as GitHubApiClient,
-};
 use GuzzleHttp\Exception\ClientException;
-use Symfony\Component\Yaml\Yaml;
 use InvalidArgumentException;
+use NAVIT\AzureAd\ApiClient as AzureAdApiClient;
+use NAVIT\GitHub\ApiClient as GitHubApiClient;
+use NAVIT\Teams\Runner\Output;
+use NAVIT\Teams\Runner\Result;
+use NAVIT\Teams\Runner\ResultEntry;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
-class Runner {
+class Runner
+{
     private AzureAdApiClient $azureAdApiClient;
     private GitHubApiClient $githubApiClient;
     private NaisDeploymentApiClient $naisDeploymentApiClient;
@@ -48,13 +45,14 @@ class Runner {
      * @throws InvalidArgumentException
      * @return void
      */
-    private function validateTeams(array $teams) : void {
+    private function validateTeams(array $teams): void
+    {
         foreach ($teams as $team) {
             if (empty($team['name'])) {
                 throw new InvalidArgumentException(sprintf('Missing team name: %s', Yaml::dump($team)));
-            } else if (empty($team['description'])) {
+            } elseif (empty($team['description'])) {
                 throw new InvalidArgumentException(sprintf('Missing team description: %s', Yaml::dump($team)));
-            } else if (0 === preg_match('/^[a-z][a-z0-9-]{2,29}(?<!-)$/', $team['name'])) {
+            } elseif (0 === preg_match('/^[a-z][a-z0-9-]{2,29}(?<!-)$/', $team['name'])) {
                 throw new InvalidArgumentException(sprintf('Invalid team name: %s', $team['name']));
             }
         }
@@ -77,22 +75,22 @@ class Runner {
         string $containerApplicationId,
         string $containerApplicationRoleId,
         array $aadOwnerGroups = []
-    ) : Result {
+    ): Result {
         $this->validateTeams($teams);
 
         $managedTeams = array_filter(
             $this->azureAdApiClient->getEnterpriseAppGroups($containerApplicationId),
-            fn(array $group) : bool => !empty($group['mailNickname']),
+            fn (array $group): bool => !empty($group['mailNickname']),
         );
 
         if (empty($managedTeams)) {
             throw new RuntimeException('Unable to fetch managed teams, aborting...');
         }
 
-        $isManaged = fn(array $group) : bool =>
+        $isManaged = fn (array $group): bool =>
             0 !== count(array_filter(
                 $managedTeams,
-                fn(array $managedTeam) =>
+                fn (array $managedTeam) =>
                     strtolower((string) $group['mailNickname']) === strtolower((string) $managedTeam['mailNickname'])
             ));
 
@@ -131,9 +129,12 @@ class Runner {
                     /** @var array{id:string,displayName:string,mailNickname:string,description:string} */
                     $aadGroup = $this->azureAdApiClient->createGroup($teamName, $teamDescription, [$userObjectId], [$userObjectId]);
                 } catch (ClientException $e) {
-                    $this->output->failure($teamName, sprintf(
+                    $this->output->failure(
+                        $teamName,
+                        sprintf(
                         'Unable to create Azure AD group, error message: %s',
-                        $e->getMessage())
+                        $e->getMessage()
+                    )
                     );
                     continue;
                 }
@@ -158,9 +159,12 @@ class Runner {
             $githubTeam = $this->githubApiClient->getTeam($teamName);
 
             if (null !== $githubTeam) {
-                $this->output->debug($teamName, sprintf(
+                $this->output->debug(
+                    $teamName,
+                    sprintf(
                     'Team already exists on GitHub (ID: %d)',
-                    $githubTeam['id'])
+                    $githubTeam['id']
+                )
                 );
             } else {
                 $this->output->debug($teamName, 'Team does not exist on GitHub, creating...');
@@ -185,9 +189,12 @@ class Runner {
                         ));
                     }
                 } catch (ClientException $e) {
-                    $this->output->failure($teamName, sprintf(
+                    $this->output->failure(
+                        $teamName,
+                        sprintf(
                         'Unable to create GitHub team, error message: %s',
-                        $e->getMessage())
+                        $e->getMessage()
+                    )
                     );
                 }
             }
@@ -206,7 +213,8 @@ class Runner {
      * @param string $teamName
      * @return void
      */
-    private function provisionTeamKey(string $teamName) : void {
+    private function provisionTeamKey(string $teamName): void
+    {
         for ($failures = 0; $failures < 5; $failures++) {
             try {
                 $this->naisDeploymentApiClient->provisionTeamKey($teamName);
@@ -237,7 +245,8 @@ class Runner {
      * @param string[] $groupIds
      * @return void
      */
-    private function addOwnerToGroups(string $userId, array $groupIds) : void {
+    private function addOwnerToGroups(string $userId, array $groupIds): void
+    {
         foreach ($groupIds as $groupId) {
             try {
                 $this->azureAdApiClient->addUserToGroup($userId, $groupId);

@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 namespace NAVIT\Teams\Runner;
 
-class Output {
+class Output
+{
     const DEBUG   = 'DEBUG';
     const FAILURE = 'FAILURE';
 
@@ -19,7 +20,8 @@ class Output {
      * @param string $message The message
      * @return void
      */
-    public function debug(string $teamName, string $message) : void {
+    public function debug(string $teamName, string $message): void
+    {
         $message = $this->normalize($message);
 
         $this->messages[] = [
@@ -38,7 +40,8 @@ class Output {
      * @param string $message The message
      * @return void
      */
-    public function failure(string $teamName, string $message) : void {
+    public function failure(string $teamName, string $message): void
+    {
         $message = $this->normalize($message);
 
         $this->messages[] = [
@@ -55,8 +58,9 @@ class Output {
      *
      * @return bool
      */
-    public function hasFailures() : bool {
-        return 0 !== count(array_filter($this->messages, function(array $message) : bool {
+    public function hasFailures(): bool
+    {
+        return 0 !== count(array_filter($this->messages, function (array $message): bool {
             return $message['type'] === self::FAILURE;
         }));
     }
@@ -67,7 +71,8 @@ class Output {
      * @param string $message
      * @return string
      */
-    private function normalize(string $message) : string {
+    private function normalize(string $message): string
+    {
         return trim($message);
     }
 }

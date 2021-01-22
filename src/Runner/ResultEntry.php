@@ -3,7 +3,8 @@ namespace NAVIT\Teams\Runner;
 
 use JsonSerializable;
 
-class ResultEntry implements JsonSerializable {
+class ResultEntry implements JsonSerializable
+{
     private string $teamName;
     private ?string $groupId = null;
 
@@ -12,7 +13,8 @@ class ResultEntry implements JsonSerializable {
      *
      * @param string $teamName The name of the team
      */
-    public function __construct(string $teamName) {
+    public function __construct(string $teamName)
+    {
         $this->teamName = $teamName;
     }
 
@@ -22,7 +24,8 @@ class ResultEntry implements JsonSerializable {
      * @param string $groupId
      * @return void
      */
-    public function setGroupId(string $groupId) : void {
+    public function setGroupId(string $groupId): void
+    {
         $this->groupId = $groupId;
     }
 
@@ -31,7 +34,8 @@ class ResultEntry implements JsonSerializable {
      *
      * @return array{teamName:string,groupId:?string}
      */
-    public function jsonSerialize() : array {
+    public function jsonSerialize(): array
+    {
         return [
             'teamName' => $this->teamName,
             'groupId'  => $this->groupId,
