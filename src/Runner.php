@@ -171,7 +171,7 @@ class Runner {
 
                     $this->output->debug($teamName, sprintf(
                         'Team has been created on GitHub, ID: %d',
-                        (int) $githubTeam['id']
+                        $githubTeam['id']
                     ));
 
                     $this->output->debug($teamName, 'Enable sync between Azure AD group and GitHub team...');

@@ -125,7 +125,7 @@ $runner = new Runner($azureApiClient, $githubApiClient, $naisDeploymentApiClient
 try {
     $result = $runner->run(
         $teams,
-        (string) $committerSamlId,
+        $committerSamlId,
         env('AZURE_AD_CONTAINER_APP_ID'),
         env('AZURE_AD_CONTAINER_APP_ROLE_ID'),
         array_unique(array_filter(explode(',', str_replace(' ', '', env('AAD_OWNER_GROUPS'))))),
