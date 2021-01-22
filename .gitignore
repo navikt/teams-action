@@ -5,3 +5,5 @@ phpunit.xml
 test.php
 teams.yml
 .env*
+.vscode
+.php_cs.cache

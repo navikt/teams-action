@@ -17,16 +17,17 @@
     "require": {
         "php": "^7.4",
         "guzzlehttp/guzzle": "^7.2",
-        "navikt/aad-api-client": "^0.9",
-        "navikt/github-api-client": "^0.5",
+        "navikt/aad-api-client": "^0.11.0",
+        "navikt/github-api-client": "^0.8.0",
         "symfony/yaml": "^5.0"
     },
     "require-dev": {
+        "navikt/coding-standard": "^1.0",
         "phpstan/extension-installer": "^1.0",
         "phpstan/phpstan": "^0.12",
         "phpstan/phpstan-phpunit": "^0.12.16",
         "phpunit/phpunit": "^9.3",
-        "psalm/plugin-phpunit": "^0.13.0",
+        "psalm/plugin-phpunit": "^0.15.0",
         "vimeo/psalm": "^4.0"
     },
     "autoload": {
@@ -45,6 +46,7 @@
         "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
         "phpstan": "vendor/bin/phpstan analyse",
         "psalm": "vendor/bin/psalm --no-cache",
+        "cs": "php-cs-fixer fix --dry-run --diff --diff-format udiff",
         "sa": [
             "@phpstan",
             "@psalm"
@@ -53,7 +55,8 @@
             "composer validate --strict",
             "@lint",
             "@sa",
-            "@test"
+            "@test",
+            "@cs"
         ]
     },
     "config": {
